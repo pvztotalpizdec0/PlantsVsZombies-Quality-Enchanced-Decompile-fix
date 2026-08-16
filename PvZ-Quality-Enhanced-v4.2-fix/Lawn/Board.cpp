@@ -8451,16 +8451,6 @@ void Board::KeyChar(SexyChar theChar)
 		AddZombie(ZombieType::ZOMBIE_CATAPULT, Zombie::ZOMBIE_WAVE_DEBUG);
 		return;
 	}
-	if (theChar == _S('1'))
-	{
-		Plant* aPlant = GetTopPlantAt(0, 0, PlantPriority::TOPPLANT_ANY);
-		if (aPlant)
-		{
-			aPlant->Die();
-			mChallenge->ZombieAtePlant(nullptr, aPlant);
-			return;
-		}
-	}
 	if (theChar == _S('B'))
 	{
 		mFogBlownCountDown = 2200;
