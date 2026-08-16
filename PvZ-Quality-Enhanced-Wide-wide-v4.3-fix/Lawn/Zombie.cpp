@@ -3313,14 +3313,7 @@ void Zombie::DropHead(unsigned int theDamageFlags)
     }
     if (mZombieType == ZombieType::ZOMBIE_DANCER)
     {
-        ReanimShowPrefix("Zombie_disco_glasses", RENDER_GROUP_HIDDEN);
-        ReanimShowPrefix("Zombie_disco_chops", RENDER_GROUP_HIDDEN);
         aRenderOrder = mRenderOrder - 1;
-    }
-    else if (mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
-    {
-        ReanimShowPrefix("Zombie_backup_stash", RENDER_GROUP_HIDDEN);
-        ReanimShowPrefix("Zombie_disco_chops", RENDER_GROUP_HIDDEN);
     }
     else if (mZombieType == ZombieType::ZOMBIE_NEWSPAPER)
     {
@@ -3472,13 +3465,6 @@ void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
         ReanimShowTrack("Zombie_polevaulter_outerarm_lower", RENDER_GROUP_HIDDEN);
         ReanimShowTrack("Zombie_outerarm_hand", RENDER_GROUP_HIDDEN);
         break;
-    case ZombieType::ZOMBIE_DANCER:
-    case ZombieType::ZOMBIE_BACKUP_DANCER:
-        ReanimShowTrack("Zombie_disco_outerarm_lower", RENDER_GROUP_HIDDEN);
-        ReanimShowTrack("Zombie_disco_outerhand", RENDER_GROUP_HIDDEN);
-        if (mZombieType == ZombieType::ZOMBIE_DANCER)
-            ReanimShowTrack("Zombie_disco_outerhand_point", RENDER_GROUP_HIDDEN);
-        break;
     default:
         ReanimShowPrefix("Zombie_outerarm_lower", RENDER_GROUP_HIDDEN);
         ReanimShowPrefix("Zombie_outerarm_hand", RENDER_GROUP_HIDDEN);
@@ -3559,12 +3545,10 @@ void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
             break;
         }
         case ZombieType::ZOMBIE_DANCER:
-            GetTrackPosition("Zombie_disco_outerarm_lower", aPosX, aPosY);
-            aBodyReanim->SetImageOverride("Zombie_disco_outerarm_upper", IMAGE_REANIM_ZOMBIE_DISCO_OUTERARM_UPPER2);
+            GetTrackPosition("Zombie_outerarm_lower", aPosX, aPosY);
             break;
         case ZombieType::ZOMBIE_BACKUP_DANCER:
-            GetTrackPosition("Zombie_disco_outerarm_lower", aPosX, aPosY);
-            aBodyReanim->SetImageOverride("Zombie_disco_outerarm_upper", IMAGE_REANIM_ZOMBIE_BACKUP_OUTERARM_UPPER2);
+            GetTrackPosition("Zombie_outerarm_lower", aPosX, aPosY);
             break;
         case ZombieType::ZOMBIE_LADDER:
             GetTrackPosition("Zombie_outerarm_hand", aPosX, aPosY);
