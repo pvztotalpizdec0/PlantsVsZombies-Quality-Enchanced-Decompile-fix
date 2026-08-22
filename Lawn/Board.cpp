@@ -7683,6 +7683,72 @@ void Board::DoTypingCheck(KeyCode theKey)
 void Board::KeyDown(KeyCode theKey)
 {
 	DoTypingCheck(theKey);
+	
+	if (mApp->mBankKeybinds)
+	{
+		int keyCode = (int)theKey;
+
+		bool isUpperNum = (keyCode >= 0x30 && keyCode <= 0x39);
+		bool isNumpadNum = (keyCode >= 0x60 && keyCode <= 0x69);
+
+		if ((isUpperNum || isNumpadNum) && mSeedBank->mY >= 0)
+		{
+			if (isNumpadNum)
+			{
+				keyCode = 0x30 + (keyCode - 0x60);
+			}
+
+			for (int i = 0; i <= mSeedBank->mNumPackets; i++)
+			{
+				int aSeedIndex = i;
+
+				if (keyCode == (0x30 + aSeedIndex) && mSeedBank->mNumPackets >= aSeedIndex)
+				{
+					if (aSeedIndex == 0)
+						aSeedIndex = 9;
+					else
+						aSeedIndex--;
+
+					SeedPacket* aPacket = &mSeedBank->mSeedPackets[aSeedIndex];
+					if (aPacket->mPacketType == SeedType::SEED_NONE)
+						break;
+
+					if (mCursorObject->mSeedBankIndex == aSeedIndex)
+					{
+						RefreshSeedPacketFromCursor();
+						mApp->PlayFoley(FoleyType::FOLEY_DROP);
+					}
+					else
+					{
+						if (mCursorObject->mCursorType != CursorType::CURSOR_TYPE_PLANT_FROM_BANK ||
+							mCursorObject->mSeedBankIndex != aSeedIndex)
+						{
+							if (mCursorObject->mCursorType == CursorType::CURSOR_TYPE_PLANT_FROM_BANK)
+								RefreshSeedPacketFromCursor();
+							else
+								ClearCursor();
+						}
+						aPacket->MouseDown(0, 0, 0);
+					}
+					break;
+				}
+			}
+		}
+		else if (theKey == 0x53 && mShowShovel)
+		{
+			if (mCursorObject->mCursorType != CursorType::CURSOR_TYPE_SHOVEL)
+			{
+				if (mCursorObject->mCursorType == CursorType::CURSOR_TYPE_PLANT_FROM_BANK)
+					RefreshSeedPacketFromCursor();
+				PickUpTool(GameObjectType::OBJECT_TYPE_SHOVEL);
+			}
+			else
+			{
+				ClearCursor();
+				mApp->PlayFoley(FoleyType::FOLEY_DROP);
+			}
+		}
+	}
 
 	if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && 
 		mApp->mGameMode != GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN && 
@@ -7727,60 +7793,6 @@ static void TodCrash()
 
 void Board::KeyChar(SexyChar theChar)
 {
-	bool aCanUseKeybinds = mApp->mBankKeybinds && (!mPaused || mApp->mGameScene == GameScenes::SCENE_PLAYING || mApp->mCrazyDaveState != CrazyDaveState::CRAZY_DAVE_OFF);
-	if (isdigit((unsigned char)theChar) && aCanUseKeybinds && mSeedBank->mY >= 0)
-	{
-		for (int i = 0; i <= mSeedBank->mNumPackets; i++)
-		{
-			int aSeedIndex = i;
-			if (theChar == '0' + aSeedIndex && mSeedBank->mNumPackets >= aSeedIndex)
-			{
-				if (mApp->mZeroNineBankFormat)
-				{
-					if (aSeedIndex == 0)
-						aSeedIndex = 9;
-					else
-						aSeedIndex--;
-				}
-				SeedPacket* aPacket = &mSeedBank->mSeedPackets[aSeedIndex];
-				if (aPacket->mPacketType == SeedType::SEED_NONE)	
-					break;
-
-				if (mCursorObject->mSeedBankIndex == aSeedIndex)
-				{
-					RefreshSeedPacketFromCursor();
-					mApp->PlayFoley(FoleyType::FOLEY_DROP);
-				}
-				else
-				{
-					if (mCursorObject->mCursorType != CursorType::CURSOR_TYPE_PLANT_FROM_BANK || mCursorObject->mSeedBankIndex != aSeedIndex)
-					{
-						if (mCursorObject->mCursorType == CursorType::CURSOR_TYPE_PLANT_FROM_BANK)
-							RefreshSeedPacketFromCursor();
-						else
-							ClearCursor();
-					}
-					aPacket->MouseDown(0, 0, 0);
-				}
-				break;
-			}
-		}
-	}
-	else if (tolower(theChar) == _S('s') && aCanUseKeybinds && mShowShovel)
-	{
-		if (mCursorObject->mCursorType != CursorType::CURSOR_TYPE_SHOVEL)
-		{
-			if (mCursorObject->mCursorType == CursorType::CURSOR_TYPE_PLANT_FROM_BANK)
-				RefreshSeedPacketFromCursor();
-			PickUpTool(GameObjectType::OBJECT_TYPE_SHOVEL);
-		}
-		else
-		{
-			ClearCursor();
-			mApp->PlayFoley(FoleyType::FOLEY_DROP);
-		}
-	}
-
 	if (!mApp->mDebugKeysEnabled)
 		return;
 
