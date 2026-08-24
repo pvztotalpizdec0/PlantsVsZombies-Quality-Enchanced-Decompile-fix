@@ -343,7 +343,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 	{
 		int aPosX, aPosY;
 		GetSeedPosition(aSeedType, aPosX, aPosY);
-		PlantDefinition& aPlantDef = GetPlantDefinition(aSeedType);
+		PlantDefinition& aPlantDef = gPlantDefs[aSeedType];
 		if (!mApp->SeedTypeAvailable(aSeedType))
 		{
 			if (aSeedType != SeedType::SEED_IMITATER){
@@ -363,7 +363,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 			else
 			{
 				g->SetClipRect(cSeedClipRect);
-				DrawSeedPacket(g, aPosX, aPosY, aSeedType, SeedType::SEED_NONE, 0, 255, true, false);
+				DrawSeedPacket(g, aPosX, aPosY, aSeedType, SeedType::SEED_NONE, 0, 255, true, false, false);
 				if (aSeedType == aSeedMouseOn)
 					g->DrawImage(Sexy::IMAGE_SEEDPACKETFLASH, aPosX, aPosY);
 			}
@@ -376,7 +376,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 		bool aNight = mSelectedSeed == SeedType::SEED_SEASHROOM;
 		g->DrawImage(aNight ? Sexy::IMAGE_ALMANAC_GROUNDNIGHTPOOL : Sexy::IMAGE_ALMANAC_GROUNDPOOL, 521, 107);
 
-		if (mApp->Is3dAccel())
+		if (mApp->mIs3dAccel)
 		{
 			g->SetClipRect(475, 0, 397, 500);
 			g->mTransY -= 145;
@@ -402,7 +402,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 	}
 
 	g->DrawImage(Sexy::IMAGE_ALMANAC_PLANTCARD, 459, 86);
-	PlantDefinition& aPlantDef = GetPlantDefinition(mSelectedSeed);
+	PlantDefinition& aPlantDef = gPlantDefs[mSelectedSeed];
 	SexyString aName = Plant::GetNameString(mSelectedSeed, SEED_NONE);
 	//TodDrawString(g, to_string((int)mIncrement), 32, 32, Sexy::FONT_DWARVENTODCRAFT18YELLOW, Color::White, DS_ALIGN_CENTER);
 	TodDrawString(g, aName, 617, 288, Sexy::FONT_DWARVENTODCRAFT18YELLOW, Color::White, DS_ALIGN_CENTER);
@@ -480,7 +480,7 @@ void AlmanacDialog::DrawZombies(Graphics* g)
 		ZombieType aZombieType = GetZombieType(i);
 		int aPosX, aPosY;
 		GetZombiePosition(aZombieType, aPosX, aPosY);
-		ZombieDefinition aZombieDefiniton = GetZombieDefinition(aZombieType);
+		ZombieDefinition aZombieDefiniton = gZombieDefs[aZombieType];
 		if (aZombieType != ZombieType::ZOMBIE_INVALID)
 		{
 			if (!ZombieIsShown(aZombieType))
@@ -575,7 +575,7 @@ void AlmanacDialog::DrawZombies(Graphics* g)
 	}
 	g->DrawImage(Sexy::IMAGE_ALMANAC_ZOMBIECARD, 455, 78);
 
-	ZombieDefinition& aZombieDef = GetZombieDefinition(mSelectedZombie);
+	ZombieDefinition& aZombieDef = gZombieDefs[mSelectedZombie];
 	SexyString aName = ZombieHasSilhouette(mSelectedZombie) ? _S("???") : StrFormat(_S("[%s]"), aZombieDef.mZombieName);
 	TodDrawString(g, aName, 613, 362, Sexy::FONT_DWARVENTODCRAFT18GREENINSET, Color(190, 255, 235, 255), DS_ALIGN_CENTER);
 	Font* descriptionFont = Sexy::FONT_BRIANNETOD12;
@@ -698,7 +698,7 @@ SeedType AlmanacDialog::SeedHitTest(int x, int y)
 	{
 		for (SeedType aSeedType = SeedType::SEED_PEASHOOTER; aSeedType < NUM_SEEDS_IN_CHOOSER; aSeedType = (SeedType)(aSeedType + 1))
 		{
-			PlantDefinition& aPlantDef = GetPlantDefinition(aSeedType);
+			PlantDefinition& aPlantDef = gPlantDefs[aSeedType];
 			if (mApp->SeedTypeAvailable(aSeedType))
 			{
 				int aSeedX, aSeedY;
@@ -719,7 +719,7 @@ int AlmanacDialog::ZombieHasSilhouette(ZombieType theZombieType)
 	if (theZombieType != ZombieType::ZOMBIE_YETI || mApp->CanSpawnYetis())
 		return false;
 
-	return mApp->HasFinishedAdventure() || mApp->mPlayerInfo->mLevel > GetZombieDefinition(ZombieType::ZOMBIE_YETI).mStartingLevel;
+	return mApp->HasFinishedAdventure() || mApp->mPlayerInfo->mLevel > gZombieDefs[ZombieType::ZOMBIE_YETI].mStartingLevel;
 }
 
 int AlmanacDialog::ZombieIsShown(ZombieType theZombieType)
@@ -736,7 +736,7 @@ int AlmanacDialog::ZombieIsShown(ZombieType theZombieType)
 			return true;
 
 		int aLevel = mApp->mPlayerInfo->mLevel;
-		int aStart = GetZombieDefinition(theZombieType).mStartingLevel;
+		int aStart = gZombieDefs[theZombieType].mStartingLevel;
 		return aStart <= aLevel && (aStart != aLevel || !Board::IsZombieTypeSpawnedOnly(theZombieType) || gZombieDefeated[theZombieType]);
 	}
 	else if (theZombieType > ZombieType::ZOMBIE_BOSS)
@@ -749,7 +749,7 @@ int AlmanacDialog::ZombieIsShown(ZombieType theZombieType)
 int AlmanacDialog::ZombieHasDescription(ZombieType theZombieType)
 {
 	int aLevel = mApp->mPlayerInfo->mLevel;
-	int aStart = GetZombieDefinition(theZombieType).mStartingLevel;
+	int aStart = gZombieDefs[theZombieType].mStartingLevel;
 
 	if (theZombieType == ZombieType::ZOMBIE_YETI)
 	{
@@ -777,7 +777,7 @@ ZombieType AlmanacDialog::ZombieHitTest(int x, int y)
 		for (int i = 0; i < NUM_ZOMBIES_IN_ALMANAC; i++)
 		{
 			ZombieType aZombieType = GetZombieType(i);
-			ZombieDefinition aZombieDefiniton = GetZombieDefinition(aZombieType);
+			ZombieDefinition aZombieDefiniton = gZombieDefs[aZombieType];
 			if (aZombieType != ZombieType::ZOMBIE_INVALID)
 			{
 				int aZombieX, aZombieY;

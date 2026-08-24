@@ -105,13 +105,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "TODO: <Company name>"
-            VALUE "FileDescription", "TODO: <File description>"
+            VALUE "CompanyName", "Company name"
+            VALUE "FileDescription", "Plants vs. Zombies"
             VALUE "FileVersion", "1.0.0.1"
-            VALUE "InternalName", "LawnProj.exe"
+            VALUE "InternalName", "PlantsVsZombies.exe"
             VALUE "LegalCopyright", "Copyright (C) 2024"
-            VALUE "OriginalFilename", "LawnProj.exe"
-            VALUE "ProductName", "TODO: <Product name>"
+            VALUE "OriginalFilename", "PlantsVsZombies.exe"
+            VALUE "ProductName", "Plants vs. Zombies"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END

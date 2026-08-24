@@ -7,6 +7,7 @@
 #include "ImageFont.h"
 #include "SysFont.h"
 #include "../ImageLib/ImageLib.h"
+#include "../SexyAppFramework/DDInterface.h"
 
 //#define SEXY_PERF_ENABLED
 #include "PerfTimer.h"
@@ -301,8 +302,8 @@ bool ResourceManager::ParseImageResource(XMLElement &theElement)
 	aRes->mA4R4G4B4 = theElement.mAttributes.find(_S("a4r4g4b4")) != theElement.mAttributes.end();
 	aRes->mDDSurface = theElement.mAttributes.find(_S("ddsurface")) != theElement.mAttributes.end();
 	aRes->mPurgeBits = (theElement.mAttributes.find(_S("nobits")) != theElement.mAttributes.end()) ||
-		((mApp->Is3DAccelerated()) && (theElement.mAttributes.find(_S("nobits3d")) != theElement.mAttributes.end())) ||
-		((!mApp->Is3DAccelerated()) && (theElement.mAttributes.find(_S("nobits2d")) != theElement.mAttributes.end()));
+		((mApp->mDDInterface->mIs3D) && (theElement.mAttributes.find(_S("nobits3d")) != theElement.mAttributes.end())) ||
+		((!mApp->mDDInterface->mIs3D) && (theElement.mAttributes.find(_S("nobits2d")) != theElement.mAttributes.end()));
 	aRes->mA8R8G8B8 = theElement.mAttributes.find(_S("a8r8g8b8")) != theElement.mAttributes.end();
 	aRes->mMinimizeSubdivisions = theElement.mAttributes.find(_S("minsubdivide")) != theElement.mAttributes.end();
 	aRes->mAutoFindAlpha = theElement.mAttributes.find(_S("noalpha")) == theElement.mAttributes.end();	

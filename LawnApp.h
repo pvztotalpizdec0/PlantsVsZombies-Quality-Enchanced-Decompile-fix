@@ -23,7 +23,6 @@ class ProfileMgr;
 class PlayerInfo;
 class Music;
 class TitleScreen;
-class PopDRMComm;
 class ChallengeScreen;
 class StoreScreen;
 class AlmanacDialog;
@@ -104,7 +103,6 @@ public:
 	SexyString						mCrazyDaveMessageText;							
 	int								mAppRandSeed;									
 	HICON							mBigArrowCursor;								
-	PopDRMComm*						mDRM;											
 	int								mSessionID;										
 	int								mPlayTimeActiveSession;							
 	int								mPlayTimeInactiveSession;						
@@ -213,8 +211,6 @@ public:
 	virtual Dialog*					NewDialog(int theDialogId, bool isModal, const SexyString& theDialogHeader, const SexyString& theDialogLines, const SexyString& theDialogFooter, int theButtonMode);
 	virtual bool					KillDialog(int theDialogId);
 	virtual void					ModalOpen();
-	virtual void					ModalClose();
-	virtual void					PreDisplayHook();
 	virtual bool					ChangeDirHook(const char* theIntendedPath);
 	virtual bool					NeedRegister();
 	virtual void					UpdateRegisterInfo();
@@ -227,7 +223,6 @@ public:
 	bool							IsContinuousChallenge();
 	/*inline*/ bool					IsArtChallenge();
 	bool							NeedPauseGame();
-	virtual void					ShowResourceError(bool doExit = false);
 	void							ToggleSlowMo();
 	void							ToggleFastMo();
 	void							PlayFoley(FoleyType theFoleyType);
@@ -261,7 +256,6 @@ public:
 	/*inline*/ bool					SeedTypeAvailable(SeedType theSeedType);
 	bool							HasAllUpgrades();
 	/*inline*/ void					EndLevel();
-	inline bool						IsIceDemo() { return false; }
 	/*inline*/ bool					IsShovelLevel();
 	/*inline*/ bool					IsWallnutBowlingLevel();
 	/*inline*/ bool					IsMiniBossLevel();
@@ -309,7 +303,6 @@ public:
 	/*inline*/ bool					EarnedGoldTrophy();
 	inline bool						IsRegistered() { return false; }
 	inline bool						IsExpired() { return false; }
-	inline bool						IsDRMConnected() { return false; }
 	/*inline*/ bool					IsScaryPotterLevel();
 	static /*inline*/ bool			IsEndlessScaryPotter(GameMode theGameMode);
 	/*inline*/ bool					IsSquirrelLevel();
@@ -342,7 +335,6 @@ public:
 	/*inline*/ bool					CanDoDaisyMode();
 	virtual void					SwitchScreenMode(bool wantWindowed, bool is3d, bool force = false);
 	virtual void					ToggleDebugMode();
-	bool							Is3dAccel();
 	static /*inline*/ void			CenterDialog(Dialog* theDialog, int theWidth, int theHeight);
 	void							GetAchievement(AchievementType theAchievementType);
 	void							UpdateDiscordState(SexyString theState = "");

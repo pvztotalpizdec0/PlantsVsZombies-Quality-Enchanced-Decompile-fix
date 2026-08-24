@@ -688,7 +688,7 @@ void Music::StartGameMusic()
 		MakeSureMusicIsPlaying(MusicTune::MUSIC_TUNE_FOG_RIGORMORMIST);
 	else if (mApp->mBoard->StageIsNight())
 		MakeSureMusicIsPlaying(MusicTune::MUSIC_TUNE_NIGHT_MOONGRAINS);
-	else if (mApp->mBoard->StageHas6Rows())
+	else if (mApp->mBoard->StageHasPool())
 		MakeSureMusicIsPlaying(MusicTune::MUSIC_TUNE_POOL_WATERYGRAVES);
 	else if (mApp->mBoard->StageHasRoof())
 		MakeSureMusicIsPlaying(MusicTune::MUSIC_TUNE_ROOF_GRAZETHEROOF);

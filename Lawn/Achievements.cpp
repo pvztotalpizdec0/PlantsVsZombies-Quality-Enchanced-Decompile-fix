@@ -46,7 +46,7 @@ void Achievements::GiveAchievement(AchievementType theAchivementType)
 	mApp->PlaySample(SOUND_ACHIEVEMENT);
 	if (mApp->mBoard)
 	{
-		SexyString aAchivementText = StrFormat(_S("[ACHIEVEMENT_%s_TITLE]"), ReturnAchievementName(theAchivementType).c_str());
+		SexyString aAchivementText = StrFormat(_S("[ACHIEVEMENT_%s_TITLE]"), gAchievementDefs[theAchivementType].mAchievementName);
 		SexyString aMessage = TodReplaceString(_S("[ACHIEVEMENT_ACHIEVED]"), _S("{ACHIEVEMENT}"), aAchivementText);
 		mApp->mBoard->DisplayAdvice(aMessage, MESSAGE_STYLE_HINT_FAST, AdviceType::ADVICE_NONE);
 	}
@@ -72,14 +72,4 @@ void Achievements::InitAchievement()
 
 	if (mApp->GetNumTrophies(ChallengePage::CHALLENGE_PAGE_CHALLENGE) >= mApp->GetTotalTrophies(ChallengePage::CHALLENGE_PAGE_CHALLENGE))
 		GiveAchievement(AchievementType::ACHIEVEMENT_BEYOND_THE_GRAVE);
-}
-
-SexyString Achievements::ReturnAchievementName(int theAchivementIndex)
-{
-	return gAchievementDefs[theAchivementIndex].mAchievementName;
-}
-
-bool Achievements::ReturnShowInAwards(int theAchivementIndex)
-{
-	return gAchievementDefs[theAchivementIndex].mShowInAwards;
 }

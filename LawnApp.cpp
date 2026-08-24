@@ -16,7 +16,6 @@
 #include "Lawn/System/PlayerInfo.h"
 #include "Lawn/System/PoolEffect.h"
 #include "Lawn/System/ProfileMgr.h"
-#include "Lawn/System/PopDRMComm.h"
 #include "Lawn/Widget/GameButton.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "Lawn/Widget/UserDialog.h"
@@ -150,7 +149,6 @@ LawnApp::LawnApp()
 	mCrazyDaveBlinkReanimID = ReanimationID::REANIMATIONID_NULL;
 	mCrazyDaveMessageIndex = -1;
 	mBigArrowCursor = LoadCursor(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDC_CURSOR1));
-	mDRM = nullptr;
 	mPlayingQuickplay = false;
 }
 
@@ -331,12 +329,6 @@ void LawnApp::Shutdown()
 		FreeGlobalAllocators();
 		UpdateRegisterInfo();
 		SexyAppBase::Shutdown();
-
-		if (mDRM)
-		{
-			delete mDRM;
-		}
-		mDRM = nullptr;
 	}
 }
 
@@ -1171,13 +1163,14 @@ bool LawnApp::KillNewOptionsDialog()
 	if (aNewOptionsDialog->mAdvancedMode)
 	{
 		mDiscordPresence = aNewOptionsDialog->mDiscordCheckbox->IsChecked();
-		mBankKeybinds = aNewOptionsDialog->mBankKeybindsCheckbox->IsChecked();
+		mKeybinds = aNewOptionsDialog->mKeybindsCheckbox->IsChecked();
 		mZeroNineBankFormat = aNewOptionsDialog->m09FormatCheckbox->IsChecked();
 		mSpeedModifier = stoi(aNewOptionsDialog->mSpeedEditWidget->mString.c_str());
 		mAutoCollectSuns = aNewOptionsDialog->mAutoCollectSunsCheckbox->IsChecked();
 		mAutoCollectCoins = aNewOptionsDialog->mAutoCollectCoinsCheckbox->IsChecked();
 		mZombieHealthbars = aNewOptionsDialog->mZombieHealthbarsCheckbox->IsChecked();
 		mPlantHealthbars = aNewOptionsDialog->mPlantHealthbarsCheckbox->IsChecked();
+		mShowRefresh = aNewOptionsDialog->mShowRefreshCheckbox->IsChecked();
 		ToggleDebugMode();
 		SwitchScreenMode(wantWindowed, want3D, false);
 		bool aCustomCursor = aNewOptionsDialog->mCustomCursorCheckbox->IsChecked();
@@ -1235,10 +1228,6 @@ void LawnApp::ModalOpen()
 	}
 }
 
-void LawnApp::ModalClose()
-{
-}
-
 bool LawnApp::KillDialog(int theDialogId)
 {
 	if (SexyAppBase::KillDialog(theDialogId))
@@ -1264,11 +1253,6 @@ bool LawnApp::KillDialog(int theDialogId)
 	}
 
 	return false;
-}
-
-void LawnApp::ShowResourceError(bool doExit)
-{
-	SexyAppBase::ShowResourceError(doExit);
 }
 
 void BetaSubmitFunc()
@@ -1323,7 +1307,7 @@ void LawnApp::Init()
 	
 	if (!mResourceManager->ParseResourcesFile(mResourcesPath))
 	{
-		ShowResourceError(true);
+		gSexyAppBase->ShowResourceError(true);
 		return;
 	}
 	int aIndex = 0;
@@ -1611,7 +1595,7 @@ void LawnApp::CheckForGameEnd()
 	bool aForceAchievements = false;
 	for (int aAchivement = 0; aAchivement < NUM_ACHIEVEMENTS; aAchivement++)
 	{
-		if (mPlayerInfo->mEarnedAchievements[aAchivement] && !mPlayerInfo->mShownedAchievements[aAchivement] && mAchievements->ReturnShowInAwards(aAchivement))
+		if (mPlayerInfo->mEarnedAchievements[aAchivement] && !mPlayerInfo->mShownedAchievements[aAchivement] && gAchievementDefs[aAchivement].mShowInAwards)
 			aForceAchievements = true;
 	}
 
@@ -1867,7 +1851,7 @@ void LawnApp::LoadGroup(const char* theGroupName, int theGroupAveMsToLoad)
 
 	if (mResourceManager->HadError() || !ExtractResourcesByName(mResourceManager, theGroupName))
 	{
-		ShowResourceError();
+		gSexyAppBase->ShowResourceError();
 		mLoadingFailed = true;
 	}
 	else
@@ -2023,11 +2007,6 @@ void LawnApp::ConfirmQuit()
 	LawnDialog* aDialog = (LawnDialog*)DoDialog(Dialogs::DIALOG_QUIT, true, aHeader, aBody, _S(""), Dialog::BUTTONS_OK_CANCEL);
 	aDialog->mLawnYesButton->mLabel = TodStringTranslate(_S("[QUIT_BUTTON]"));
 	CenterDialog(aDialog, aDialog->mWidth, aDialog->mHeight);
-}
-
-void LawnApp::PreDisplayHook()
-{
-	SexyApp::PreDisplayHook();
 }
 
 void LawnApp::ButtonPress(int theId)
@@ -2411,7 +2390,7 @@ bool LawnApp::CanShowSeedBankAfterSun()
 
 bool LawnApp::IsNight()
 {
-	if (IsIceDemo() || mBoard == nullptr)
+	if (mBoard == nullptr)
 		return false;
 	
 	return (mBoard->mLevel >= 11 && mBoard->mLevel <= 20) || (mBoard->mLevel >= 31 && mBoard->mLevel <= 40) || mBoard->mLevel == 50;
@@ -2660,9 +2639,6 @@ SexyString LawnApp::GetCrazyDaveText(int theMessageIndex)
 
 bool LawnApp::CanShowAlmanac()
 {
-	if (IsIceDemo())
-		return false;
-
 	if (mPlayerInfo == nullptr)
 		return false;
 
@@ -2671,9 +2647,6 @@ bool LawnApp::CanShowAlmanac()
 
 bool LawnApp::CanShowStore()
 {
-	if (IsIceDemo())
-		return false;
-
 	if (mPlayerInfo == nullptr)
 		return false;
 
@@ -2693,7 +2666,7 @@ bool LawnApp::CanShowZenGarden()
 
 bool LawnApp::CanSpawnYetis()
 {
-	const ZombieDefinition& aZombieDef = GetZombieDefinition(ZombieType::ZOMBIE_YETI);
+	const ZombieDefinition& aZombieDef = gZombieDefs[ZombieType::ZOMBIE_YETI];
 	return HasFinishedAdventure() && (mPlayerInfo->mFinishedAdventure >= 2 || mPlayerInfo->mLevel >= aZombieDef.mStartingLevel);
 }
 
@@ -3235,7 +3208,7 @@ int LawnApp::GetNumPreloadingTasks()
 
 		for (ZombieType i = ZombieType::ZOMBIE_NORMAL; i < ZombieType::NUM_ZOMBIE_TYPES;i = (ZombieType)((int)i + 1))
 		{
-			if (HasFinishedAdventure() || mPlayerInfo->mLevel >= GetZombieDefinition(i).mStartingLevel)
+			if (HasFinishedAdventure() || mPlayerInfo->mLevel >= gZombieDefs[i].mStartingLevel)
 			{
 				if (i != ZombieType::ZOMBIE_BOSS &&
 					i != ZombieType::ZOMBIE_CATAPULT &&
@@ -3306,7 +3279,7 @@ void LawnApp::PreloadForUser()
 
 		for (ZombieType i = ZombieType::ZOMBIE_NORMAL; i < ZombieType::NUM_ZOMBIE_TYPES;i = (ZombieType)((int)i + 1))
 		{
-			if (HasFinishedAdventure() || mPlayerInfo->mLevel >= GetZombieDefinition(i).mStartingLevel)
+			if (HasFinishedAdventure() || mPlayerInfo->mLevel >= gZombieDefs[i].mStartingLevel)
 			{
 				continue;
 			}
@@ -3486,29 +3459,11 @@ bool LawnApp::IsTrialStageLocked()
 	if (mDebugTrialLocked)
 		return true;
 
-	if (mDRM && mDRM->QueryData())
-		return false;
-
 	return mTrialType == TrialType::TRIALTYPE_STAGELOCKED;
 }
 
 void LawnApp::InitHook()
 {
-#ifdef _DEBUG
-	mDRM = nullptr;
-#else
-	mDRM = new PopDRMComm();
-	mDRM->DoIPC();
-	if (sexystricmp(GetString("MarketingMode", _S("")).c_str(), _S("StageLocked")) == 0)
-	{
-		mTrialType = TrialType::TRIALTYPE_STAGELOCKED;
-		mDRM->EnableLocking();
-	}
-	else
-	{
-		mTrialType = TrialType::TRIALTYPE_NONE;
-	}
-#endif
 }
 
 SexyString LawnApp::GetMoneyString(int theAmount)
@@ -3647,11 +3602,6 @@ void LawnApp::ToggleDebugMode()
 	{
 		mTodCheatKeys = mDebugKeysEnabled = aNewOptionsDialog->mDebugModeCheckbox->IsChecked();
 	}
-}
-
-bool LawnApp::Is3dAccel()
-{
-	return mIs3dAccel;
 }
 
 

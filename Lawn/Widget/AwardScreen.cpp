@@ -197,7 +197,7 @@ void AwardScreen::LoadAchievements()
     {
         for (int i = 0; i < NUM_ACHIEVEMENTS; i++) 
         {
-            if (mApp->mPlayerInfo->mEarnedAchievements[i] && !mApp->mPlayerInfo->mShownedAchievements[i] && mApp->mAchievements->ReturnShowInAwards(i)) 
+            if (mApp->mPlayerInfo->mEarnedAchievements[i] && !mApp->mPlayerInfo->mShownedAchievements[i] && gAchievementDefs[i].mShowInAwards)
             {
                 mShowAchievements = true;
                 break;
@@ -239,7 +239,7 @@ void AwardScreen::DrawAwardSeed(Graphics* g)
     DrawBottom(g, _S("[NEW_PLANT]"), aAward, aMessage);
 
     g->SetScale(2, 2, 350, 129);
-    DrawSeedPacket(g, 350, 129, aSeedType, SEED_NONE, 0, 255, true, false);
+    DrawSeedPacket(g, 350, 129, aSeedType, SEED_NONE, 0, 255, true, false, false);
     g->SetScale(1, 1, 0, 0);
 }
 
@@ -387,11 +387,11 @@ void AwardScreen::Draw(Graphics* g)
         int aMaxScroll = 0;
         for (int i = 0; i < NUM_ACHIEVEMENTS; i++)
         {
-            if (mApp->mPlayerInfo->mEarnedAchievements[i] && !mApp->mPlayerInfo->mShownedAchievements[i] && mApp->mAchievements->ReturnShowInAwards(i))
+            if (mApp->mPlayerInfo->mEarnedAchievements[i] && !mApp->mPlayerInfo->mShownedAchievements[i] && gAchievementDefs[i].mShowInAwards)
             {
                 aTotalShown++;
-                SexyString aAchievementName = StrFormat(_S("[ACHIEVEMENT_%s_TITLE]"), mApp->mAchievements->ReturnAchievementName(i).c_str());
-                SexyString aAchievementDesc = StrFormat(_S("[ACHIEVEMENT_%s_DESCRIPTION]"), mApp->mAchievements->ReturnAchievementName(i).c_str());
+                SexyString aAchievementName = StrFormat(_S("[ACHIEVEMENT_%s_TITLE]"), gAchievementDefs[i].mAchievementName);
+                SexyString aAchievementDesc = StrFormat(_S("[ACHIEVEMENT_%s_DESCRIPTION]"), gAchievementDefs[i].mAchievementName);
                 Rect aTextRect = Rect(80, 30, 320, 230);
                 int aXPos = BOARD_WIDTH / 2 - aTextRect.mWidth / 2 - 35;
                 int aOffset = 75;

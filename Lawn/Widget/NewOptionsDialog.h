@@ -47,7 +47,7 @@ public:
 	Sexy::Checkbox*			mHardwareAccelerationCheckbox;		
 	Sexy::Checkbox*			mDebugModeCheckbox;
 	Sexy::Checkbox*			mDiscordCheckbox;
-	Sexy::Checkbox*			mBankKeybindsCheckbox;
+	Sexy::Checkbox*			mKeybindsCheckbox;
 	Sexy::Checkbox*			m09FormatCheckbox;
 	Sexy::Checkbox*			mAutoCollectSunsCheckbox;
 	Sexy::Checkbox*			mAutoCollectCoinsCheckbox;
@@ -72,6 +72,7 @@ public:
 	NewLawnButton*			mResourcePackButton;
 	Sexy::Checkbox*			mRealHardwareAccelerationCheckbox;
 	Sexy::Checkbox*			mCustomCursorCheckbox;
+	Sexy::Checkbox*			mShowRefreshCheckbox;
 
 public:
 	NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector, bool theAdvanced);

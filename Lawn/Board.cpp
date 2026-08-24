@@ -6,7 +6,6 @@
 #include "Widget/LawnDialog.h"
 #include "System/PlayerInfo.h"
 #include "System/PoolEffect.h"
-#include "System/PopDRMComm.h"
 #include "System/TypingCheck.h"
 #include "Widget/StoreScreen.h"
 #include "Widget/AlmanacDialog.h"
@@ -30,7 +29,7 @@
 #include "../SexyAppFramework/ButtonWidget.h"
 #include "../SexyAppFramework/WidgetManager.h"
 #include "../SexyAppFramework/SoundInstance.h"
-
+#include "../SexyAppFramework/DDInterface.h"
 #define SEXY_PERF_ENABLED
 #include "../SexyAppFramework/PerfTimer.h"
 
@@ -534,17 +533,6 @@ bool Board::IsFlagWave(int theWaveNumber)
 	return theWaveNumber % aWavesPerFlag == aWavesPerFlag - 1;
 }
 
-void ZombiePickerInitForWave(ZombiePicker* theZombiePicker)
-{
-	memset(theZombiePicker, 0, sizeof(ZombiePicker));
-}
-
-void ZombiePickerInit(ZombiePicker* theZombiePicker)
-{
-	ZombiePickerInitForWave(theZombiePicker);
-	memset(theZombiePicker->mAllWavesZombieTypeCount, 0, sizeof(theZombiePicker->mAllWavesZombieTypeCount));
-}
-
 void Board::PutZombieInWave(ZombieType theZombieType, int theWaveNumber, ZombiePicker* theZombiePicker)
 {
 	TOD_ASSERT(theWaveNumber < MAX_ZOMBIE_WAVES && theZombiePicker->mZombieCount < MAX_ZOMBIES_IN_WAVE);
@@ -553,7 +541,7 @@ void Board::PutZombieInWave(ZombieType theZombieType, int theWaveNumber, ZombieP
 	{
 		mZombiesInWave[theWaveNumber][theZombiePicker->mZombieCount] = ZombieType::ZOMBIE_INVALID;
 	}
-	theZombiePicker->mZombiePoints -= GetZombieDefinition(theZombieType).mZombieValue;
+	theZombiePicker->mZombiePoints -= gZombieDefs[theZombieType].mZombieValue;
 	theZombiePicker->mZombieTypeCount[theZombieType]++;
 	theZombiePicker->mAllWavesZombieTypeCount[theZombieType]++;
 }
@@ -609,13 +597,13 @@ void Board::PickZombieWaves()
 	}
 
 	ZombiePicker aZombiePicker;
-	ZombiePickerInit(&aZombiePicker);
+	memset(&aZombiePicker, 0, sizeof(ZombiePicker));
 	ZombieType aIntroZombieType = GetIntroducedZombieType();
 	TOD_ASSERT(mNumWaves <= MAX_ZOMBIE_WAVES);
 
 	for (int aWave = 0; aWave < mNumWaves; aWave++)
 	{
-		ZombiePickerInitForWave(&aZombiePicker);
+		memset(&aZombiePicker, 0, sizeof(ZombiePicker));
 		mZombiesInWave[aWave][0] = ZombieType::ZOMBIE_INVALID;
 
 		bool aIsFlagWave = IsFlagWave(aWave);
@@ -1173,7 +1161,7 @@ bool Board::IsZombieWaveDistributionOk()
 	{
 		if (aZombieType != ZombieType::ZOMBIE_YETI && CanZombieSpawnOnLevel(aZombieType, mLevel) && aZombieTypeCount[(int)aZombieType] == 0)
 		{
-			TodTraceAndLog("Didn't spawn required zombie %s, level %d", SexyStringToStringFast(GetZombieDefinition(aZombieType).mZombieName), mLevel);
+			TodTraceAndLog("Didn't spawn required zombie %s, level %d", SexyStringToStringFast(gZombieDefs[aZombieType].mZombieName), mLevel);
 			return false;
 		}
 	}
@@ -2349,7 +2337,7 @@ Projectile* Board::AddProjectile(int theX, int theY, int theRenderOrder, int the
 
 bool Board::CanZombieSpawnOnLevel(ZombieType theZombieType, int theLevel)
 {
-	const ZombieDefinition& aZombieDef = GetZombieDefinition(theZombieType);
+	const ZombieDefinition& aZombieDef = gZombieDefs[theZombieType];
 	if (theZombieType == ZombieType::ZOMBIE_YETI)
 	{
 		return gLawnApp->CanSpawnYetis();
@@ -2373,7 +2361,7 @@ ZombieType Board::GetIntroducedZombieType()
 
 	for (ZombieType aZombieType = ZombieType::ZOMBIE_NORMAL; aZombieType < ZombieType::NUM_ZOMBIE_TYPES; aZombieType = (ZombieType)((int)aZombieType + 1))
 	{
-		const ZombieDefinition& aZombieDef = GetZombieDefinition(aZombieType);
+		const ZombieDefinition& aZombieDef = gZombieDefs[aZombieType];
 		if ((aZombieType != ZombieType::ZOMBIE_YETI || mApp->CanSpawnYetis()) && aZombieDef.mStartingLevel == mLevel)
 		{
 			return aZombieType;
@@ -2387,20 +2375,20 @@ ZombieType Board::PickGraveRisingZombieType(int theZombiePoints)
 	TodWeightedArray aZombieWeightArray[(int)ZombieType::NUM_ZOMBIE_TYPES];
 	int aCount = 2;
 	aZombieWeightArray[0].mItem = ZombieType::ZOMBIE_NORMAL;
-	aZombieWeightArray[0].mWeight = GetZombieDefinition(ZombieType::ZOMBIE_NORMAL).mPickWeight;
+	aZombieWeightArray[0].mWeight = gZombieDefs[ZombieType::ZOMBIE_NORMAL].mPickWeight;
 	aZombieWeightArray[1].mItem = ZombieType::ZOMBIE_TRAFFIC_CONE;
-	aZombieWeightArray[1].mWeight = GetZombieDefinition(ZombieType::ZOMBIE_TRAFFIC_CONE).mPickWeight;
+	aZombieWeightArray[1].mWeight = gZombieDefs[ZombieType::ZOMBIE_TRAFFIC_CONE].mPickWeight;
 	if (!StageHasGraveStones())
 	{
 		aZombieWeightArray[2].mItem = ZombieType::ZOMBIE_PAIL;
-		aZombieWeightArray[2].mWeight = GetZombieDefinition(ZombieType::ZOMBIE_PAIL).mPickWeight;
+		aZombieWeightArray[2].mWeight = gZombieDefs[ZombieType::ZOMBIE_PAIL].mPickWeight;
 		aCount++;
 	}
 
 	for (int i = 0; i < aCount; i++)
 	{
 		ZombieType aZombieType = (ZombieType)aZombieWeightArray[i].mItem;
-		const ZombieDefinition& aZombieDef = GetZombieDefinition(aZombieType);
+		const ZombieDefinition& aZombieDef = gZombieDefs[aZombieType];
 		if ((mApp->IsFirstTimeAdventureMode() && mLevel < aZombieDef.mStartingLevel) || (!mZombieAllowed[aZombieType] && aZombieType != ZombieType::ZOMBIE_NORMAL))
 		{
 			aZombieWeightArray[i].mWeight = 0;
@@ -2419,7 +2407,7 @@ ZombieType Board::PickZombieType(int theZombiePoints, int theWaveIndex, ZombiePi
 		if (!mZombieAllowed[aZombieType])
 			continue;
 
-		const ZombieDefinition& aZombieDef = GetZombieDefinition((ZombieType)aZombieType);
+		const ZombieDefinition& aZombieDef = gZombieDefs[(ZombieType)aZombieType];
 
 		GameMode aGameMode = mApp->mGameMode;
 		if (aZombieType == ZombieType::ZOMBIE_BUNGEE && mApp->IsSurvivalEndless(aGameMode))
@@ -4540,10 +4528,6 @@ void Board::MouseUp(int x, int y, int theClickCount)
 			}
 			else if (mApp->mGameMode == GameMode::GAMEMODE_UPSELL)
 			{
-				if (mApp->mDRM)
-				{
-					mApp->mDRM->BuyGame();
-				}
 				mApp->DoBackToMain();
 			}
 		}
@@ -4663,7 +4647,7 @@ void Board::SpawnZombiesFromPool()
 		}
 
 		aZombie->RiseFromGrave(aGrid->mX, aGrid->mY);
-		aZombiePoints -= GetZombieDefinition(aZombieType).mZombieValue;
+		aZombiePoints -= gZombieDefs[aZombieType].mZombieValue;
 		if (aZombiePoints < 1)
 		{
 			aZombiePoints = 1;
@@ -4736,7 +4720,7 @@ void Board::SpawnZombiesFromSky()
 	{
 		ZombieType aZombieType = PickGraveRisingZombieType(aZombiePoints);
 		BungeeDropZombie(&aBungeeDropGrid, aZombieType);
-		aZombiePoints -= GetZombieDefinition(aZombieType).mZombieValue;
+		aZombiePoints -= gZombieDefs[aZombieType].mZombieValue;
 		if (aZombiePoints < 1)
 		{
 			aZombiePoints = 1;
@@ -4780,7 +4764,7 @@ void Board::SpawnZombiesFromGraves()
 		}
 
 		aZombie->RiseFromGrave(aGridItem->mGridX, aGridItem->mGridY);
-		aZombiePoints -= GetZombieDefinition(aZombieType).mZombieValue;
+		aZombiePoints -= gZombieDefs[aZombieType].mZombieValue;
 		if (aZombieType < 1)
 		{
 			aZombiePoints = 1;
@@ -5418,7 +5402,8 @@ void Board::UpdateTutorial()
 	if (mApp->IsFirstTimeAdventureMode() && mLevel >= 3 && mLevel != 5 && mLevel <= 7 && mTutorialState == TutorialState::TUTORIAL_OFF &&
 		mCurrentWave >= 5 && !gShownMoreSunTutorial && mSeedBank->mSeedPackets[1].CanPickUp() && CountPlantByType(SeedType::SEED_SUNFLOWER) < 3)
 	{
-		TOD_ASSERT(!ChooseSeedsOnCurrentLevel());
+		if (ChooseSeedsOnCurrentLevel()) 
+			return;
 		DisplayAdvice(_S("[ADVICE_PLANT_SUNFLOWER4]"), MessageStyle::MESSAGE_STYLE_TUTORIAL_LATER_STAY, AdviceType::ADVICE_NONE);
 		gShownMoreSunTutorial = true;
 		SetTutorialState(TutorialState::TUTORIAL_MORESUN_PICK_UP_SUNFLOWER);
@@ -7173,6 +7158,10 @@ void Board::DrawTopRightUI(Graphics* g)
 		}
 	}
 
+	mMenuButton->Draw(g);
+	if (HAS_FAST_FORWARD_BUTTON)
+		mFastButton->Draw(g);
+
 	if (mTutorialState == TutorialState::TUTORIAL_ZEN_GARDEN_COMPLETED)
 	{
 		g->SetColorizeImages(true);
@@ -7370,7 +7359,7 @@ void Board::UpdateFog()
 
 void Board::DrawFog(Graphics* g)
 {
-	Image* aImageFog = mApp->Is3dAccel() ? Sexy::IMAGE_FOG : Sexy::IMAGE_FOG_SOFTWARE;
+	Image* aImageFog = mApp->mIs3dAccel ? Sexy::IMAGE_FOG : Sexy::IMAGE_FOG_SOFTWARE;
 	for (int x = 0; x < MAX_GRID_SIZE_X; x++)
 	{
 		for (int y = 0; y < MAX_GRID_SIZE_Y + 1; y++)
@@ -7391,7 +7380,7 @@ void Board::DrawFog(Graphics* g)
 
 			int aColorVariant = 255 - aCelLook * 1.5 - aMotion * 1.5;
 			int aLightnessVariant = 255 - aCelLook - aMotion;
-			if (!mApp->Is3dAccel())
+			if (!mApp->mIs3dAccel)
 			{
 				aPosX += 10;
 				aPosY += 3;
@@ -7430,10 +7419,6 @@ void Board::DrawUITop(Graphics* g)
 	{
 		DrawTopRightUI(g);
 	}
-
-	mMenuButton->Draw(g);
-	if (HAS_FAST_FORWARD_BUTTON)
-		mFastButton->Draw(g);
 
 	if (mTimeStopCounter > 0)
 	{
@@ -7684,7 +7669,7 @@ void Board::KeyDown(KeyCode theKey)
 {
 	DoTypingCheck(theKey);
 	
-	if (mApp->mBankKeybinds)
+	if (mApp->mKeybinds)
 	{
 		int keyCode = (int)theKey;
 
@@ -7746,6 +7731,16 @@ void Board::KeyDown(KeyCode theKey)
 			{
 				ClearCursor();
 				mApp->PlayFoley(FoleyType::FOLEY_DROP);
+			}
+		}
+		else if (theKey == 0x46 && mFastButton != nullptr && !mFastButton->mBtnNoDraw)
+		{
+			if (!mApp->GetDialog(Dialogs::DIALOG_GAME_OVER) && !mApp->GetDialog(Dialogs::DIALOG_LEVEL_COMPLETE) && mBoardFadeOutCounter < 0)
+			{
+				mFastButton->mIsOver = false;
+				mFastButton->mIsDown = false;
+				UpdateCursor();
+				mApp->mIsFastMode = !mApp->mIsFastMode;
 			}
 		}
 	}
@@ -8524,7 +8519,7 @@ void Board::KeyChar(SexyChar theChar)
 	}
 	if (theChar == _S('%'))
 	{
-		mApp->SwitchScreenMode(mApp->mIsWindowed, !mApp->Is3DAccelerated(), false);
+		mApp->SwitchScreenMode(mApp->mIsWindowed, !mApp->mDDInterface->mIs3D, false);
 	}
 	if (theChar == _S('M'))
 	{
@@ -8780,7 +8775,7 @@ bool Board::StageHasPool()
 
 bool Board::StageHas6Rows()
 {
-	return (mBackground == BackgroundType::BACKGROUND_3_POOL || mBackground == BackgroundType::BACKGROUND_4_FOG);
+	return StageHasPool();
 }
 
 bool Board::StageHasZombieWalkInFromRight()
@@ -8939,7 +8934,7 @@ int Board::PixelToGridY(int theX, int theY)
 		}
 		return ClampInt((theY - LAWN_YMIN) / 85, 0, MAX_GRID_SIZE_Y - 2);
 	}
-	else if (StageHasPool())
+	else if (StageHas6Rows())
 	{
 		return ClampInt((theY - LAWN_YMIN) / 85, 0, MAX_GRID_SIZE_Y - 1);
 	}
@@ -9016,7 +9011,7 @@ int Board::GridToPixelY(int theGridX, int theGridY)
 		}
 		aY = theGridY * 85 + aSlopeOffset + LAWN_YMIN - 10;
 	}
-	else if (StageHasPool())
+	else if (StageHas6Rows())
 	{
 		aY = theGridY * 85 + LAWN_YMIN;
 	}

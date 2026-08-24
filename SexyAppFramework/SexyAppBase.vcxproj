@@ -385,7 +385,6 @@
     <ClCompile Include="..\Lawn\MessageWidget.cpp" />
     <ClCompile Include="..\PakLib\PakInterface.cpp" />
     <ClCompile Include="..\Lawn\Plant.cpp" />
-    <ClCompile Include="..\Lawn\System\PopDRMComm.cpp" />
     <ClCompile Include="..\Lawn\Widget\SeedChooserScreen.cpp" />
     <ClCompile Include="..\Lawn\SeedPacket.cpp" />
     <ClCompile Include="..\Lawn\Widget\StoreScreen.cpp" />
@@ -931,7 +930,6 @@
     <ClInclude Include="..\Lawn\Plant.h" />
     <ClInclude Include="..\Lawn\System\PlayerInfo.h" />
     <ClInclude Include="..\Lawn\System\PoolEffect.h" />
-    <ClInclude Include="..\Lawn\System\PopDRMComm.h" />
     <ClInclude Include="..\Lawn\Projectile.h" />
     <ClInclude Include="..\Sexy.TodLib\FilterEffect.h" />
     <ClInclude Include="..\Sexy.TodLib\ReanimAtlas.h" />
@@ -1061,7 +1059,7 @@
     <None Include="MI_SlowStretchBlt.inc" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="LawnProject.rc" />
+    <ResourceCompile Include="PlantsVsZombies.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\main_icon.ico" />

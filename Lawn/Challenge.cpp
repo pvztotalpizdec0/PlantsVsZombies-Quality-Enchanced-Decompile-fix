@@ -2969,7 +2969,7 @@ void Challenge::DrawWeather(Graphics* g)
 
 void Challenge::DrawRain(Graphics* g)
 {
-	if (mBoard->mCutScene->IsBeforePreloading() || !mApp->Is3dAccel())
+	if (mBoard->mCutScene->IsBeforePreloading() || !mApp->mIs3dAccel)
 		return;
 
 	int aBoardOffsetX;

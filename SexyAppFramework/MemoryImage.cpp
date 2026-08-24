@@ -1114,7 +1114,7 @@ void MemoryImage::PurgeBits()
 {
 	mPurgeBits = true;
 
-	if (mApp->Is3DAccelerated())
+	if (mApp->mDDInterface->mIs3D)
 	{
 		// Due to potential D3D threading issues we have to defer the texture creation
 		//  and therefore the actual purging

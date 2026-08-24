@@ -125,7 +125,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     mWidth = 80;
     mHeight = 80;
     memset(mMagnetItems, 0, sizeof(mMagnetItems));
-    const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
+    const PlantDefinition& aPlantDef = gPlantDefs[theSeedType];
     mIsAsleep = false;
     mWakeUpCounter = 0;
     mOnBungeeState = PlantOnBungeeState::NOT_ON_BUNGEE;
@@ -1135,7 +1135,7 @@ void Plant::UpdatePotato()
             float aRate = RandRangeFloat(12.0f, 15.0f);
             PlayBodyReanim("anim_armed", ReanimLoopType::REANIM_LOOP, 0, aRate);
 
-            Reanimation* aLightReanim = mApp->AddReanimation(0.0f, 0.0f, mRenderOrder + 2, GetPlantDefinition(mSeedType).mReanimationType);
+            Reanimation* aLightReanim = mApp->AddReanimation(0.0f, 0.0f, mRenderOrder + 2, gPlantDefs[mSeedType].mReanimationType);
             aLightReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
             aLightReanim->mAnimRate = aRate - 2.0f;
             aLightReanim->SetFramesForLayer("anim_glow");
@@ -1238,8 +1238,6 @@ void Plant::UpdateTanglekelp()
 
 void Plant::SpikeweedAttack()
 {
-    TOD_ASSERT(IsSpiky());
-
     if (mState != PlantState::STATE_SPIKEWEED_ATTACKING)
     {
         PlayBodyReanim("anim_attack", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 18.0f);
@@ -2858,7 +2856,7 @@ bool Plant::NotOnGround()
 
 Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
 {
-    const PlantDefinition& aPlantDef = GetPlantDefinition(mSeedType);
+    const PlantDefinition& aPlantDef = gPlantDefs[mSeedType];
     LawnApp* aApp = (LawnApp*)gSexyAppBase;
     Reanimation* aAnimToAttach = theReanimBody;
     const char* aTrackToPlay = "anim_blink";
@@ -3772,7 +3770,7 @@ void Plant::DrawMagnetItems(Graphics* g)
 
 Image* Plant::GetImage(SeedType theSeedType)
 {
-    Image** aImages = GetPlantDefinition(theSeedType).mPlantImage;
+    Image** aImages = gPlantDefs[theSeedType].mPlantImage;
     return aImages ? aImages[0] : nullptr;
 }
 
@@ -4010,7 +4008,7 @@ void Plant::Draw(Graphics* g)
             Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
             if (aBodyReanim)
             {
-                if (!mApp->Is3dAccel() && mSeedType == SeedType::SEED_FLOWERPOT && IsOnBoard() &&
+                if (!mApp->mIs3dAccel && mSeedType == SeedType::SEED_FLOWERPOT && IsOnBoard() &&
                     aBodyReanim->mAnimRate == 0.0f && aBodyReanim->IsAnimPlaying("anim_idle"))
                 {
                     mApp->mReanimatorCache->DrawCachedPlant(g, aOffsetX, aOffsetY, mSeedType, DrawVariation::VARIATION_NORMAL);
@@ -4118,7 +4116,7 @@ void Plant::DrawSeedType(Graphics* g, SeedType theSeedType, SeedType theImitater
     }
     else
     {
-        const PlantDefinition& aPlantDef = GetPlantDefinition(aSeedType);
+        const PlantDefinition& aPlantDef = gPlantDefs[aSeedType];
 
         if (aSeedType == SeedType::SEED_GIANT_WALLNUT)
         {
@@ -4932,11 +4930,6 @@ void Plant::Die()
     }
 }
 
-PlantDefinition& GetPlantDefinition(SeedType theSeedType)
-{
-    return gPlantDefs[theSeedType];
-}
-
 int Plant::GetCost(SeedType theSeedType, SeedType theImitaterType)
 {
     if (gLawnApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED || gLawnApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED_TWIST)
@@ -4988,12 +4981,12 @@ int Plant::GetCost(SeedType theSeedType, SeedType theImitaterType)
     {
         if (theSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
         {
-            const PlantDefinition& aPlantDef = GetPlantDefinition(theImitaterType);
+            const PlantDefinition& aPlantDef = gPlantDefs[theImitaterType];
             return aPlantDef.mSeedCost;
         }
         else
         {
-            const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
+            const PlantDefinition& aPlantDef = gPlantDefs[theSeedType];
             return aPlantDef.mSeedCost;
         }
     }
@@ -5002,13 +4995,13 @@ int Plant::GetCost(SeedType theSeedType, SeedType theImitaterType)
 
 SexyString Plant::GetNameString(SeedType theSeedType, SeedType theImitaterType)
 {
-    const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
+    const PlantDefinition& aPlantDef = gPlantDefs[theSeedType];
     SexyString aName = StrFormat(_S("[%s]"), aPlantDef.mPlantName);
     SexyString aTranslatedName = TodStringTranslate(StringToSexyStringFast(aName));
 
     if (theSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
     {
-        const PlantDefinition& aImitaterDef = GetPlantDefinition(theImitaterType);
+        const PlantDefinition& aImitaterDef = gPlantDefs[theImitaterType];
         std::string aImitaterName = StrFormat(_S("[%s]"), aImitaterDef.mPlantName);
         std::string aTranslatedImitaterName = TodStringTranslate(StringToSexyStringFast(aImitaterName));
         return StrFormat(_S("%s %s"), aTranslatedName.c_str(), aTranslatedImitaterName.c_str());
@@ -5019,7 +5012,7 @@ SexyString Plant::GetNameString(SeedType theSeedType, SeedType theImitaterType)
 
 SexyString Plant::GetToolTip(SeedType theSeedType)
 {
-    const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
+    const PlantDefinition& aPlantDef = gPlantDefs[theSeedType];
     SexyString aToolTip = StrFormat(_S("[%s_TOOLTIP]"), aPlantDef.mPlantName);
     return TodStringTranslate(aToolTip);
 }
@@ -5033,12 +5026,12 @@ int Plant::GetRefreshTime(SeedType theSeedType, SeedType theImitaterType)
 
     if (theSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
     {
-        const PlantDefinition& aPlantDef = GetPlantDefinition(theImitaterType);
+        const PlantDefinition& aPlantDef = gPlantDefs[theImitaterType];
         return aPlantDef.mRefreshTime;
     }
     else
     {
-        const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
+        const PlantDefinition& aPlantDef = gPlantDefs[theSeedType];
         return aPlantDef.mRefreshTime;
     }
 }
@@ -5142,7 +5135,7 @@ Rect Plant::GetPlantAttackRect(PlantWeapon thePlantWeapon)
 
 void Plant::PreloadPlantResources(SeedType theSeedType)
 {
-    const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
+    const PlantDefinition& aPlantDef = gPlantDefs[theSeedType];
     if (aPlantDef.mReanimationType != ReanimationType::REANIM_NONE)
     {
         ReanimatorEnsureDefinitionLoaded(aPlantDef.mReanimationType, true);

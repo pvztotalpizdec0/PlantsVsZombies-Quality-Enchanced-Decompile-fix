@@ -16,8 +16,6 @@ public:
     LawnApp*                mApp;
     void                    GiveAchievement(AchievementType theAchivementType);
     void                    InitAchievement();
-    SexyString              ReturnAchievementName(int theAchivementIndex);
-    bool                    ReturnShowInAwards(int theAchivementIndex);
 };
 
 class AchievementDefinition

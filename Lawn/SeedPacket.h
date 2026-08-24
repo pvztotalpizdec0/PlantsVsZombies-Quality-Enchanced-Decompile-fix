@@ -22,7 +22,7 @@ public:
     float               mSlotMachiningPosition;                     
     bool                mActive;                                    
     bool                mRefreshing;                                
-    int                 mTimesUsed;                                 
+    int                 mTimesUsed;     
 
 public:
     SeedPacket();
@@ -67,7 +67,7 @@ public:
 };
 
 void				    SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float theOffsetX, float theOffsetY, float theScale);
-void				    DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost);
+void				    DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost, bool theDrawRefresh, int theRefreshTime = 0, int theRefreshCounter = 0);
 
 
 #endif

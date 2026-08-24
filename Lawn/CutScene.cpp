@@ -144,7 +144,7 @@ void CutScene::PlaceAZombie(ZombieType theZombieType, int theGridX, int theGridY
 		aZombie->mPosY += Rand(50) - 25;  //RandRangeInt(-25, 24);
 		aZombie->mPosX += Rand(50) - 25;  //RandRangeInt(-25, 24);
 	}
-	else if (Is2x2Zombie(theZombieType))
+	else if (theZombieType == ZombieType::ZOMBIE_GARGANTUAR || theZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
 	{
 		aZombie->mPosX += Rand(15) - 20;  //RandRangeInt(-20, -6);
 	}
@@ -182,7 +182,7 @@ bool CutScene::CanZombieGoInGridSpot(ZombieType theZombieType, int theGridX, int
 		return false;
 	}
 
-	if (Is2x2Zombie(theZombieType))
+	if (theZombieType == ZombieType::ZOMBIE_GARGANTUAR || theZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
 	{
 		if (theGridX == 0 || theGridY == 0)
 		{
@@ -224,7 +224,7 @@ bool CutScene::CanZombieGoInGridSpot(ZombieType theZombieType, int theGridX, int
 		return false;
 	}
 
-	if (Is2x2Zombie(theZombieType) ||
+	if ((theZombieType == ZombieType::ZOMBIE_GARGANTUAR || theZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR) ||
 		theZombieType == ZombieType::ZOMBIE_ZAMBONI ||
 		theZombieType == ZombieType::ZOMBIE_BOBSLED ||
 		theZombieType == ZombieType::ZOMBIE_POLEVAULTER)
@@ -290,7 +290,7 @@ void CutScene::FindAndPlaceZombie(ZombieType theZombieType, bool theZombieGrid[5
 	{
 		theZombieGrid[aGridX][aGridY] = true;
 	}
-	if (Is2x2Zombie(theZombieType))
+	if (theZombieType == ZombieType::ZOMBIE_GARGANTUAR || theZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
 	{
 		TOD_ASSERT(aGridX > 0 && aGridY > 0);
 		theZombieGrid[aGridX - 1][aGridY] = true;
@@ -304,11 +304,6 @@ void CutScene::FindAndPlaceZombie(ZombieType theZombieType, bool theZombieGrid[5
 		PlaceAZombie(ZombieType::ZOMBIE_BUNGEE, 1, aGridY);
 		PlaceAZombie(ZombieType::ZOMBIE_BUNGEE, 2, aGridY);
 	}
-}
-
-bool CutScene::Is2x2Zombie(ZombieType theZombieType)
-{
-	return theZombieType == ZombieType::ZOMBIE_GARGANTUAR || theZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR;
 }
 
 void CutScene::PreloadResources()
@@ -502,7 +497,7 @@ void CutScene::PlaceStreetZombies()
 				break;
 			}
 
-			aZombieValueTotal += GetZombieDefinition(aZombieType).mZombieValue;
+			aZombieValueTotal += gZombieDefs[aZombieType].mZombieValue;
 
 			if (aZombieType == ZombieType::ZOMBIE_FLAG)
 			{
@@ -555,14 +550,14 @@ void CutScene::PlaceStreetZombies()
 
 	for (ZombieType aZombieType = ZombieType::ZOMBIE_NORMAL; aZombieType < ZombieType::NUM_ZOMBIE_TYPES; aZombieType = (ZombieType)((int)aZombieType + 1))
 	{
-		if (aZombieTypeCount[(int)aZombieType] && (Is2x2Zombie(aZombieType) || aZombieType == ZombieType::ZOMBIE_ZAMBONI))
+		if (aZombieTypeCount[(int)aZombieType] && ((aZombieType == ZombieType::ZOMBIE_GARGANTUAR || aZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR) || aZombieType == ZombieType::ZOMBIE_ZAMBONI))
 		{
 			FindAndPlaceZombie(aZombieType, aZombieGrid);
 		}
 	}
 	for (ZombieType aZombieType = ZombieType::ZOMBIE_NORMAL; aZombieType < ZombieType::NUM_ZOMBIE_TYPES; aZombieType = (ZombieType)((int)aZombieType + 1))
 	{
-		if (aZombieTypeCount[(int)aZombieType] && !Is2x2Zombie(aZombieType) && aZombieType != ZombieType::ZOMBIE_ZAMBONI)
+		if (aZombieTypeCount[(int)aZombieType] && !(aZombieType == ZombieType::ZOMBIE_GARGANTUAR || aZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR) && aZombieType != ZombieType::ZOMBIE_ZAMBONI)
 		{
 			int aZombieNumInWave = aZombieTypeCount[(int)aZombieType];
 			int aZombiePreviewNum = aZombieNumInWave * aPreviewCapacity / aTotalZombieCount;
@@ -1304,13 +1299,6 @@ bool CutScene::IsInShovelTutorial()
 		mBoard->mTutorialState == TutorialState::TUTORIAL_SHOVEL_KEEP_DIGGING;
 }
 
-void CutScene::StartSeedChooser()
-{
-	mApp->mSeedChooserScreen->mMouseVisible = true;
-	mSeedChoosing = true;
-	mApp->mWidgetManager->SetFocus(mApp->mSeedChooserScreen);
-}
-
 void CutScene::EndSeedChooser()
 {
 	mApp->mSeedChooserScreen->mMouseVisible = false;
@@ -1384,7 +1372,9 @@ void CutScene::Update()
 		mCutsceneTime += 10;
 		if (mCutsceneTime == TimeSeedChoserSlideOnEnd + mCrazyDaveTime && mBoard->ChooseSeedsOnCurrentLevel())
 		{
-			StartSeedChooser();
+			mApp->mSeedChooserScreen->mMouseVisible = true;
+			mSeedChoosing = true;
+			mApp->mWidgetManager->SetFocus(mApp->mSeedChooserScreen);
 		}
 	}
 

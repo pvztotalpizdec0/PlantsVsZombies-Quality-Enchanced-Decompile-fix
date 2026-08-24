@@ -2467,11 +2467,11 @@ Debug Mode
 [OPTIONS_DISCORD_PRESENCE]
 Discord Presence
 
-[OPTIONS_SEED_BANK_KEYBINDS]
-Seed Bank Keybinds
+[OPTIONS_KEYBINDS]
+Keybinds
 
 [OPTIONS_SEED_BANK_KEYBIND]
-Keybind: '{KEYBIND}'
+Seed Bank Keybind: '{KEYBIND}'
 
 [OPTIONS_SHOVEL_KEYBIND]
 Shovel Keybind: 'S'
@@ -2508,6 +2508,9 @@ Actual 3D Acceleration
 
 [OPTIONS_CUSTOM_CURSOR]
 Custom Cursor
+
+[OPTIONS_SHOW_REFRESH]
+Show Refresh Time
 
 [NO_WINDOWED_MODE_HEADER]
 No Windowed Mode

@@ -64,7 +64,6 @@ public:
 	virtual bool			OpenRegisterPage(DefinesMap theDefinesMap);
 	virtual bool			OpenRegisterPage();
 
-	virtual void			PreDisplayHook();
 	virtual void			InitPropertiesHook();
 	virtual void			Init();
 	virtual void			PreTerminate();

@@ -77,3 +77,7 @@ const bool			HAS_FAST_FORWARD_BUTTON = true;
 const bool			OLD_STYLE_SEEDPACKET = false;
 const bool			OLD_STYLE_TOOLTIP = false;
 const bool			USE_ZOMBIE_SEED_VARIANT = true;
+
+////////////////////////////////////////////////////////////
+///			    	 FIX VARIABLES						 ///
+////////////////////////////////////////////////////////////

@@ -305,12 +305,13 @@ namespace Sexy
 		DWORD					mVSyncBrokenTestUpdates;
 		bool					mWaitForVSync;
 		bool					mDiscordPresence;
-		bool					mBankKeybinds;
+		bool					mKeybinds;
 		bool					mZeroNineBankFormat;
 		bool					mAutoCollectSuns;
 		bool					mAutoCollectCoins;
 		bool					mZombieHealthbars;
 		bool					mPlantHealthbars;
+		bool					mShowRefresh;
 		int						mSpeedModifier;
 		int						mQuickLevel;
 		bool					mCrazySeeds;
@@ -406,7 +407,6 @@ namespace Sexy
 		virtual void			WriteToRegistry();
 		virtual void			ReadFromRegistry();
 		virtual Dialog* NewDialog(int theDialogId, bool isModal, const SexyString& theDialogHeader, const SexyString& theDialogLines, const SexyString& theDialogFooter, int theButtonMode);
-		virtual void			PreDisplayHook();
 
 		// Public methods
 		virtual void			BeginPopup();
@@ -511,7 +511,6 @@ namespace Sexy
 		virtual bool			DebugKeyDown(int theKey);
 		virtual bool			DebugKeyDownAsync(int theKey, bool ctrlDown, bool altDown);
 		virtual void			CloseRequestAsync();
-		bool					Is3DAccelerated();
 		bool					Is3DAccelerationSupported();
 		bool					Is3DAccelerationRecommended();
 		void					DemoSyncRefreshRate();

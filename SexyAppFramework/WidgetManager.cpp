@@ -7,6 +7,7 @@
 #include "SexyAppBase.h"
 #include "PerfTimer.h"
 #include "Debug.h"
+#include "../SexyAppFramework/DDInterface.h"
 
 using namespace Sexy;
 using namespace std;
@@ -434,7 +435,7 @@ bool WidgetManager::DrawScreen()
 	{
 		Graphics g(aScrG);
 		g.Translate(-mMouseDestRect.mX, -mMouseDestRect.mY);
-		bool is3D = mApp->Is3DAccelerated();
+		bool is3D = mApp->mDDInterface->mIs3D;
 
 		WidgetList::iterator anItr = mWidgets.begin();
 		while (anItr != mWidgets.end())

@@ -506,7 +506,7 @@ void GameSelector::SyncProfile(bool theShowLoading)
 	mMinigamesLocked = true;
 	mPuzzleLocked = true;
 	mSurvivalLocked = true;
-	if (mApp->mPlayerInfo && !mApp->IsIceDemo())
+	if (mApp->mPlayerInfo)
 	{
 		if (mLevel >= 2)
 			mShowStartButton = false;
@@ -631,7 +631,7 @@ void GameSelector::DrawOverlay(Graphics* g)
 	if (mApp->mPlayerInfo == nullptr)
 		return;
 
-	if (!mApp->IsIceDemo() && !mShowStartButton)
+	if (!mShowStartButton)
 	{
 		int aOffsetX, aOffsetY;
 		if (mAdventureButton->mIsDown && mAdventureButton->mIsOver)
@@ -884,11 +884,6 @@ void GameSelector::Update()
 		{
 			mApp->KillGameSelector();
 
-			if (mApp->IsIceDemo())
-			{
-				mApp->PreNewGame(GameMode::GAMEMODE_CHALLENGE_ICE, false);
-				return;
-			}
 			if (mApp->IsFirstTimeAdventureMode() && mLevel == 1 && !mApp->SaveFileExists())
 			{
 				mApp->PreNewGame(GameMode::GAMEMODE_INTRO, false);

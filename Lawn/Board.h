@@ -83,9 +83,6 @@ struct ZombiePicker
 	int								mAllWavesZombieTypeCount[NUM_ZOMBIE_TYPES];
 };
 
-/*inline*/ void						ZombiePickerInitForWave(ZombiePicker* theZombiePicker);
-/*inline*/ void						ZombiePickerInit(ZombiePicker* theZombiePicker);
-
 struct PlantsOnLawn
 {
 	Plant*							mUnderPlant;

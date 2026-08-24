@@ -756,11 +756,16 @@ void Coin::Update()
 
     if ((mApp->mAutoCollectSuns && IsSun()) || (mApp->mAutoCollectCoins && IsMoney()))
     {
-        int aMouseX = mApp->mWidgetManager->mLastMouseX - mX;
-        int aMouseY = mApp->mWidgetManager->mLastMouseY - mY;
-        HitResult aHitResultCoin;
-        if (MouseHitTest(aMouseX, aMouseY, &aHitResultCoin))
-            MouseDown(aMouseX, aMouseY, 0);
+        if (!mIsBeingCollected && !mDead)
+        {
+            PlayCollectSound();
+            Collect();
+
+            if (mApp->IsFirstTimeAdventureMode() && mBoard->mLevel == 1)
+            {
+                mBoard->DisplayAdvice("[ADVICE_CLICKED_ON_SUN]", MessageStyle::MESSAGE_STYLE_TUTORIAL_LEVEL1_STAY, AdviceType::ADVICE_CLICKED_ON_SUN);
+            }
+        }
     }
 }
 
@@ -874,7 +879,7 @@ void Coin::Draw(Graphics* g)
     {
         SeedType aSeedType = GetFinalSeedPacketType();
         g->SetScale(mScale, mScale, 0.0f, 0.0f);
-        DrawSeedPacket(g, 0.5f * (mWidth - mScale * mWidth) + mPosX, 0.5f * (mHeight - mScale * mHeight) + mPosY, aSeedType, SeedType::SEED_NONE, 0.0f, 255, true, false);
+        DrawSeedPacket(g, 0.5f * (mWidth - mScale * mWidth) + mPosX, 0.5f * (mHeight - mScale * mHeight) + mPosY, aSeedType, SeedType::SEED_NONE, 0.0f, 255, true, false, false);
         g->SetScale(1.0f, 1.0f, 0.0f, 0.0f);
         return;
     }
@@ -983,7 +988,7 @@ void Coin::Draw(Graphics* g)
         }
 
         g->SetColorizeImages(true);
-        DrawSeedPacket(g, (int)mPosX, (int)mPosY, mUsableSeedType, SeedType::SEED_NONE, 0.0f, aGrayness, false, false);
+        DrawSeedPacket(g, (int)mPosX, (int)mPosY, mUsableSeedType, SeedType::SEED_NONE, 0.0f, aGrayness, false, false, false);
         g->SetColorizeImages(false);
 
         return;
@@ -1221,7 +1226,7 @@ void Coin::Collect()
             mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
             StartFade();
         }
-        else if (!aIsEndlessAward && mApp->Is3dAccel())
+        else if (!aIsEndlessAward && mApp->mIs3dAccel)
         {
             float aParticleOffsetX = mWidth / 2;
             float aParticleOffsetY = mHeight / 2;

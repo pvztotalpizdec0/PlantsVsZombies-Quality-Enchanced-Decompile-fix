@@ -796,9 +796,6 @@
     <ClCompile Include="..\Lawn\Widget\AwardScreen.cpp">
       <Filter>Lawn\Widget\Widget Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lawn\System\PopDRMComm.cpp">
-      <Filter>Lawn\System\System Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\Lawn\LawnCommon.cpp">
       <Filter>Lawn\Common\Common Source</Filter>
     </ClCompile>
@@ -1387,9 +1384,6 @@
     <ClInclude Include="..\Lawn\System\PoolEffect.h">
       <Filter>Lawn\System\System Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Lawn\System\PopDRMComm.h">
-      <Filter>Lawn\System\System Include</Filter>
-    </ClInclude>
     <ClInclude Include="..\Lawn\BoardInclude.h">
       <Filter>Lawn\Common\Common Include</Filter>
     </ClInclude>
@@ -1816,7 +1810,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="LawnProject.rc" />
+    <ResourceCompile Include="PlantsVsZombies.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\main_icon.ico" />

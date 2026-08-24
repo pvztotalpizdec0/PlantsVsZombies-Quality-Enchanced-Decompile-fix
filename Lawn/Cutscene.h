@@ -39,7 +39,6 @@ public:
     void                        CancelIntro();
     void                        Update();
     void                        AnimateBoard();
-    /*inline*/ void             StartSeedChooser();
     /*inline*/ void             EndSeedChooser();
     /*inline*/ int              CalcPosition(int theTimeStart, int theTimeEnd, int thePositionStart, int thePositionEnd);
     void                        PlaceStreetZombies();
@@ -62,7 +61,6 @@ public:
     bool                        CanGetPacketUpgrade(int theIndex);
     void                        FindPlaceForStreetZombies(ZombieType theZombieType, bool theZombieGrid[5][5], int& thePosX, int& thePosY);
     void                        FindAndPlaceZombie(ZombieType theZombieType, bool theZombieGrid[5][5]);
-    static /*inline*/ bool      Is2x2Zombie(ZombieType theZombieType);
     void                        PreloadResources();
     /*inline*/ bool             IsBeforePreloading();
     /*inline*/ bool             IsShowingCrazyDave();

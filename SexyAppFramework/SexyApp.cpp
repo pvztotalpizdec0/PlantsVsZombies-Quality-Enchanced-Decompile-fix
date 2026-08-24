@@ -555,16 +555,6 @@ void SexyApp::GetSEHWebParams(DefinesMap* theDefinesMap)
 	theDefinesMap->insert(DefinesMap::value_type("referid", mReferId));	
 }
 
-void SexyApp::PreDisplayHook()
-{
-	//if (mBetaValidate && !mBetaSupport->Validate())
-	//{
-	//	Shutdown();
-	//	DoExit(0);
-	//	return;
-	//}
-}
-
 void SexyApp::InitPropertiesHook()
 {
 	// Load properties if we need to

@@ -554,7 +554,7 @@ void DDImage::PurgeBits()
 
 	CommitBits();
 
-	if (!mApp->Is3DAccelerated())
+	if (!mApp->mDDInterface->mIs3D)
 	{
 		if ((mWantDDSurface) && (GenerateDDSurface()))
 		{                        

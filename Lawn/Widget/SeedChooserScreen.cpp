@@ -13,7 +13,6 @@
 #include "SeedChooserScreen.h"
 #include "../../GameConstants.h"
 #include "../System/PlayerInfo.h"
-#include "../System/PopDRMComm.h"
 #include "../../SexyAppFramework/Debug.h"
 #include "../../SexyAppFramework/Dialog.h"
 #include "../../SexyAppFramework/MTRand.h"
@@ -356,7 +355,7 @@ void SeedChooserScreen::Draw(Graphics* g)
 			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];
 			if (aChosenSeed.mSeedState != SEED_IN_CHOOSER)
 			{
-				DrawSeedPacket(g, x, y, aSeedType, SEED_NONE, 0, 55, aSeedType != SEED_IMITATER, false);
+				DrawSeedPacket(g, x, y, aSeedType, SEED_NONE, 0, 55, aSeedType != SEED_IMITATER, false, false);
 			}
 		}
 		else if(aSeedType != SEED_IMITATER)
@@ -395,7 +394,7 @@ void SeedChooserScreen::Draw(Graphics* g)
 			}
 			if (mChooseState != CHOOSE_VIEW_LAWN || (mChooseState == CHOOSE_VIEW_LAWN && aSeedState == SEED_IN_CHOOSER))
 			{
-				DrawSeedPacket(g, aPosX, aPosY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, aGrayed ? 115 : 255, aSeedType != SEED_IMITATER || aSeedState != SEED_IN_CHOOSER, false);
+				DrawSeedPacket(g, aPosX, aPosY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, aGrayed ? 115 : 255, aSeedType != SEED_IMITATER || aSeedState != SEED_IN_CHOOSER, false, false);
 			}
 		}
 		g->ClearClipRect();
@@ -408,7 +407,7 @@ void SeedChooserScreen::Draw(Graphics* g)
 		ChosenSeedState aSeedState = aChosenSeed.mSeedState;
 		if (mApp->SeedTypeAvailable(aSeedType) && (aSeedState == SEED_FLYING_TO_BANK || aSeedState == SEED_FLYING_TO_CHOOSER))
 		{
-			DrawSeedPacket(g, aChosenSeed.mX, aChosenSeed.mY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, 255, true, false);
+			DrawSeedPacket(g, aChosenSeed.mX, aChosenSeed.mY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, 255, true, false, false);
 		}
 	}
 
@@ -962,7 +961,7 @@ void SeedChooserScreen::ShowToolTip()
 	else if (!IsOverImitater(mLastMouseX, mLastMouseY))
 	{
 		
-		SexyString aZombieName = StrFormat(_S("[%s]"), GetZombieDefinition(aZombie->mZombieType).mZombieName);
+		SexyString aZombieName = StrFormat(_S("[%s]"), gZombieDefs[aZombie->mZombieType].mZombieName);
 		mToolTip->SetTitle(aZombieName);
 		if (mApp->CanShowAlmanac())
 		{
@@ -1166,10 +1165,6 @@ void SeedChooserScreen::MouseDown(int x, int y, int theClickCount)
 					Dialog::BUTTONS_YES_NO
 				) == Dialog::ID_YES)
 				{
-					if (mApp->mDRM)
-					{
-						mApp->mDRM->BuyGame();
-					}
 					mApp->DoBackToMain();
 				}
 			}

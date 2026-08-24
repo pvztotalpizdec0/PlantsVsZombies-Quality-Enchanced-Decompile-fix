@@ -273,7 +273,7 @@ void QuickPlayScreen::ChooseZombieType()
     for (int i = 0; i < NUM_ZOMBIE_TYPES; i++)
     {
         ZombieType aZombieType = GetZombieType(i);
-        ZombieDefinition aZombieDefinition = GetZombieDefinition(aZombieType);
+        ZombieDefinition aZombieDefinition = gZombieDefs[aZombieType];
         if (aZombieType != ZOMBIE_INVALID)
         {
             if (mApp->mQuickLevel == aZombieDefinition.mStartingLevel)

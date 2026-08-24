@@ -299,7 +299,8 @@ SexyAppBase::SexyAppBase()
 	mDiscordPresence = true;
 	mSpeedModifier = 2;
 	mQuickLevel = 1;
-	mBankKeybinds = false;
+	mKeybinds = false;
+	mShowRefresh = false;
 	mZeroNineBankFormat = false;
 	mAutoCollectSuns = false;
 	mAutoCollectCoins = false;
@@ -403,7 +404,7 @@ SexyAppBase::~SexyAppBase()
 		{
 			if(!Is3DAccelerationRecommended()) // may need to prompt user if he wants to keep 3d acceleration on
 			{
-				if (Is3DAccelerated())
+				if (mDDInterface->mIs3D)
 				{
 					showedMsgBox = true;
 					int aResult = MessageBox(NULL,
@@ -1590,7 +1591,7 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteInteger("QE_QuickLevel", mQuickLevel);
 	RegistryWriteBoolean("WaitForVSync", mWaitForVSync);
 	RegistryWriteBoolean("QE_DiscordPresence", mDiscordPresence);
-	RegistryWriteBoolean("QE_BankKeybinds", mBankKeybinds);
+	RegistryWriteBoolean("QE_BankKeybinds", mKeybinds);
 	RegistryWriteBoolean("QE_ZeroNineBankFormat", mZeroNineBankFormat);
 	RegistryWriteBoolean("QE_AutoCollectSuns", mAutoCollectSuns);
 	RegistryWriteBoolean("QE_AutoCollectCoins", mAutoCollectCoins);
@@ -1602,6 +1603,7 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteBoolean("QE_CustomCursor", mCustomCursor);
 	RegistryWriteBoolean("3DAcceleration", mIs3dAccel);
 	RegistryWriteInteger("MouseSensitivity", (int)(mMouseSensitivity * 100));
+	RegistryWriteBoolean("Fix_ShowRefresh", mShowRefresh);
 }
 
 bool SexyAppBase::RegistryEraseKey(const SexyString& _theKeyName)
@@ -1951,7 +1953,7 @@ void SexyAppBase::ReadFromRegistry()
 
 	RegistryReadBoolean("WaitForVSync", &mWaitForVSync);
 	RegistryReadBoolean("QE_DiscordPresence", &mDiscordPresence);
-	RegistryReadBoolean("QE_BankKeybinds", &mBankKeybinds);
+	RegistryReadBoolean("QE_BankKeybinds", &mKeybinds);
 	RegistryReadBoolean("QE_ZeroNineBankFormat", &mZeroNineBankFormat);
 	RegistryReadBoolean("QE_AutoCollectSuns", &mAutoCollectSuns);
 	RegistryReadBoolean("QE_AutoCollectCoins", &mAutoCollectCoins);
@@ -1962,6 +1964,7 @@ void SexyAppBase::ReadFromRegistry()
 	RegistryReadString("QE_ResourcePack", &mResourcePack);
 	RegistryReadBoolean("QE_CustomCursor", &mCustomCursor);
 	RegistryReadBoolean("3DAcceleration", &mIs3dAccel);
+	RegistryReadBoolean("Fix_ShowRefresh", &mShowRefresh);
 
 	if (RegistryReadInteger("InProgress", &anInt))
 		mLastShutdownWasGraceful = anInt == 0;
@@ -4194,7 +4197,7 @@ void SexyAppBase::ShowMemoryUsage()
 	else
 		aDesc = "Unsupported";
 
-	aStr += StrFormat("3D-Mode is %s (3D is %s on this system)\r\n\r\n", Is3DAccelerated() ? "On" : "Off", aDesc);
+	aStr += StrFormat("3D-Mode is %s (3D is %s on this system)\r\n\r\n", mDDInterface->mIs3D ? "On" : "Off", aDesc);
 
 	aStr += StrFormat("Num Images: %d\r\n", (int)mMemoryImageSet.size());
 	aStr += StrFormat("Num Sounds: %d\r\n", mSoundManager->GetNumSounds());
@@ -4270,10 +4273,10 @@ bool SexyAppBase::DebugKeyDown(int theKey)
 	{
 		if (mWidgetManager->mKeyDown[KEYCODE_SHIFT])
 		{
-			Set3DAcclerated(!Is3DAccelerated());
+			Set3DAcclerated(!mDDInterface->mIs3D);
 
 			char aBuf[512];
-			sprintf(aBuf, "3D-Mode: %s", Is3DAccelerated() ? "ON" : "OFF");
+			sprintf(aBuf, "3D-Mode: %s", mDDInterface->mIs3D ? "ON" : "OFF");
 			MsgBox(aBuf, "Mode Switch", MB_OK);
 			mLastTime = timeGetTime();
 		}
@@ -5013,7 +5016,7 @@ void SexyAppBase::MakeWindow()
 	}
 	else if (aResult != DDInterface::RESULT_OK)
 	{
-		if (Is3DAccelerated())
+		if (mDDInterface->mIs3D)
 		{
 			//Set3DAcclerated(false);
 			return;
@@ -5236,12 +5239,12 @@ void SexyAppBase::SwitchScreenMode(bool wantWindowed, bool is3d, bool force)
 
 void SexyAppBase::SwitchScreenMode(bool wantWindowed)
 {
-	SwitchScreenMode(wantWindowed, Is3DAccelerated());
+	SwitchScreenMode(wantWindowed, mDDInterface->mIs3D);
 }
 
 void SexyAppBase::SwitchScreenMode()
 {
-	SwitchScreenMode(mIsWindowed, Is3DAccelerated(), true);
+	SwitchScreenMode(mIsWindowed, mDDInterface->mIs3D, true);
 }
 
 void SexyAppBase::SetAlphaDisabled(bool isDisabled)
@@ -6207,10 +6210,6 @@ void SexyAppBase::HandleCmdLineParam(const std::string& theParamName, const std:
 	}
 }
 
-void SexyAppBase::PreDisplayHook()
-{
-}
-
 void SexyAppBase::PreDDInterfaceInitHook()
 {
 }
@@ -6421,11 +6420,6 @@ void SexyAppBase::Init()
 	mHandCursor = CreateCursor(gHInstance, 11, 4, 32, 32, gFingerCursorData, gFingerCursorData + sizeof(gFingerCursorData) / 2);
 	mDraggingCursor = CreateCursor(gHInstance, 15, 10, 32, 32, gDraggingCursorData, gDraggingCursorData + sizeof(gDraggingCursorData) / 2);
 
-	// Let app do something before showing window, or switching to fullscreen mode
-	// NOTE: Moved call to PreDisplayHook above mIsWindowed and GetSystemsMetrics
-	// checks because the checks below use values that could change in PreDisplayHook.
-	// PreDisplayHook must call mWidgetManager->Resize if it changes mWidth or mHeight.
-	PreDisplayHook();
 
 	mWidgetManager->Resize(Rect(0, 0, mWidth, mHeight), Rect(0, 0, mWidth, mHeight));
 
@@ -7163,12 +7157,6 @@ void SexyAppBase::Remove3DData(MemoryImage* theMemoryImage)
 {
 	if (mDDInterface)
 		mDDInterface->Remove3DData(theMemoryImage);
-}
-
-
-bool SexyAppBase::Is3DAccelerated()
-{
-	return mDDInterface->mIs3D;
 }
 
 bool SexyAppBase::Is3DAccelerationSupported()

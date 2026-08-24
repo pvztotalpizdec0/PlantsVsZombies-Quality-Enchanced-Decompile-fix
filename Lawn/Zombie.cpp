@@ -68,11 +68,6 @@ static ZombieType gBossZombieList[] = {
     ZombieType::ZOMBIE_GARGANTUAR
 };
 
-ZombieDefinition& GetZombieDefinition(ZombieType theZombieType)
-{
-    return gZombieDefs[theZombieType];
-}
-
 Zombie::Zombie()
 {
 }
@@ -161,7 +156,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     PickRandomSpeed();
     mBodyHealth = 270;
 
-    const ZombieDefinition& aZombieDef = GetZombieDefinition(mZombieType);
+    const ZombieDefinition& aZombieDef = gZombieDefs[mZombieType];
     RenderLayer aRenderLayer = RenderLayer::RENDER_LAYER_ZOMBIE;
     int aRenderOffset = 4;
     if (aZombieDef.mReanimationType != ReanimationType::REANIM_NONE)
@@ -1474,7 +1469,7 @@ Plant* Zombie::FindCatapultTarget()
     Plant* aPlant = nullptr;
     while (mBoard->IteratePlants(aPlant))
     {
-        if (aPlant->mRow == mRow && mX >= aPlant->mX + 100 && !aPlant->NotOnGround() && !aPlant->IsSpiky())
+        if (aPlant->mRow == mRow && mX >= aPlant->mX + 100 && !aPlant->NotOnGround() && !(aPlant->mSeedType == SeedType::SEED_SPIKEWEED || aPlant->mSeedType == SeedType::SEED_SPIKEROCK))
         {
             if (aTarget == nullptr || aPlant->mPlantCol < aTarget->mPlantCol)
             {
@@ -3973,7 +3968,7 @@ Plant* Zombie::IsStandingOnSpikeweed()
     Plant* aPlant = nullptr;
     while (mBoard->IteratePlants(aPlant))
     {
-        if (aPlant->mRow == mRow && aPlant->IsSpiky() && !aPlant->NotOnGround() && (!mOnHighGround || aPlant->IsOnHighGround()))
+        if (aPlant->mRow == mRow && (aPlant->mSeedType == SeedType::SEED_SPIKEWEED || aPlant->mSeedType == SeedType::SEED_SPIKEROCK) && !aPlant->NotOnGround() && (!mOnHighGround || aPlant->IsOnHighGround()))
         {
             Rect aPlantAttackRect = aPlant->GetPlantAttackRect(PlantWeapon::WEAPON_PRIMARY);
             if (GetRectOverlap(aPlantAttackRect, aZombieRect) > 0)
@@ -6087,7 +6082,7 @@ bool Zombie::CanTargetPlant(Plant* thePlant, ZombieAttackType theAttackType)
         return thePlant->mSeedType == SeedType::SEED_POTATOMINE && thePlant->mState == PlantState::STATE_NOTREADY;
     }
 
-    if (thePlant->IsSpiky())
+    if (thePlant->mSeedType == SeedType::SEED_SPIKEWEED || thePlant->mSeedType == SeedType::SEED_SPIKEROCK)
     {
         return 
             mZombieType == ZombieType::ZOMBIE_GARGANTUAR || 
@@ -6209,7 +6204,7 @@ void Zombie::SquishAllInSquare(int theX, int theY, ZombieAttackType theAttackTyp
     {
         if (aPlant->mRow == theY && aPlant->mPlantCol == theX)
         {
-            if (theAttackType == ZombieAttackType::ATTACKTYPE_DRIVE_OVER && aPlant->IsSpiky())
+            if (theAttackType == ZombieAttackType::ATTACKTYPE_DRIVE_OVER && (aPlant->mSeedType == SeedType::SEED_SPIKEWEED || aPlant->mSeedType == SeedType::SEED_SPIKEROCK))
             {
                 continue;
             }
@@ -6290,7 +6285,7 @@ void Zombie::CheckSquish(ZombieAttackType theAttackType)
         if (aPlant->mRow == mRow)
         {
             Rect aPlantRect = aPlant->GetPlantRect();
-            if (GetRectOverlap(aAttackRect, aPlantRect) >= 20 && CanTargetPlant(aPlant, theAttackType) && !aPlant->IsSpiky())
+            if (GetRectOverlap(aAttackRect, aPlantRect) >= 20 && CanTargetPlant(aPlant, theAttackType) && !(aPlant->mSeedType == SeedType::SEED_SPIKEWEED || aPlant->mSeedType == SeedType::SEED_SPIKEROCK))
             {
                 SquishAllInSquare(aPlant->mPlantCol, aPlant->mRow, theAttackType);
                 break;
@@ -7023,7 +7018,7 @@ void Zombie::DropLoot()
         return;
 
     mDroppedLoot = true;
-    int aZombieValue = GetZombieDefinition(mZombieType).mZombieValue;
+    int aZombieValue = gZombieDefs[mZombieType].mZombieValue;
     if (mApp->IsLittleTroubleLevel() && Rand(4) != 0)
     {
         return;
@@ -10244,7 +10239,7 @@ void Zombie::DrawBossPart(Graphics* g, BossPart theBossPart)
 
 void Zombie::PreloadZombieResources(ZombieType theZombieType)
 {
-    const ZombieDefinition& aZombieDef = GetZombieDefinition(theZombieType);
+    const ZombieDefinition& aZombieDef = gZombieDefs[theZombieType];
     if (aZombieDef.mReanimationType != ReanimationType::REANIM_NONE)
     {
         ReanimatorEnsureDefinitionLoaded(aZombieDef.mReanimationType, true);
@@ -10263,7 +10258,7 @@ void Zombie::PreloadZombieResources(ZombieType theZombieType)
 
         for (int i = 0; i < LENGTH(gBossZombieList); i++)
         {
-            const ZombieDefinition& aDef = GetZombieDefinition(gBossZombieList[i]);
+            const ZombieDefinition& aDef = gZombieDefs[gBossZombieList[i]];
             ReanimatorEnsureDefinitionLoaded(aDef.mReanimationType, true);
         }
     }

@@ -196,7 +196,7 @@ void SysFont::DrawString(Graphics* g, int theX, int theY, const SexyString& theS
 			if (aDDImage->mLockCount > 0)
 				aDDImage->mSurface->Unlock(NULL);
 
-			if ((g->mDestImage == gSexyAppBase->mWidgetManager->mImage) && (gSexyAppBase->Is3DAccelerated()))
+			if ((g->mDestImage == gSexyAppBase->mWidgetManager->mImage) && (gSexyAppBase->mDDInterface->mIs3D))
 				gSexyAppBase->mDDInterface->mD3DInterface->Flush();				
 			
 			if (aSurface->GetDC(&aDC) == DD_OK)

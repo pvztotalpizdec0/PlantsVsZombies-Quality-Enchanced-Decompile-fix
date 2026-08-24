@@ -13,6 +13,7 @@
 #include "../../SexyAppFramework/Checkbox.h"
 #include "../../Sexy.TodLib/TodStringFile.h"
 #include "../../SexyAppFramework/Font.h"
+#include "../../SexyAppFramework/DDInterface.h"
 
 using namespace Sexy;
 
@@ -53,15 +54,15 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector, bo
     mSfxVolumeSlider->SetValue(mApp->GetSfxVolume());
 
     mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, !mApp->mIsWindowed);
-    mHardwareAccelerationCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_HardwareAcceleration, this, mApp->Is3dAccel());
+    mHardwareAccelerationCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_HardwareAcceleration, this, mApp->mIs3dAccel);
     mDebugModeCheckbox = MakeNewCheckbox(-1, this, mApp->mTodCheatKeys);
     mDebugModeCheckbox->SetVisible(false);
 
     mDiscordCheckbox = MakeNewCheckbox(-1, this, mApp->mDiscordPresence);
     mDiscordCheckbox->SetVisible(false);
 
-    mBankKeybindsCheckbox = MakeNewCheckbox(-1, this, mApp->mBankKeybinds);
-    mBankKeybindsCheckbox->SetVisible(false);
+    mKeybindsCheckbox = MakeNewCheckbox(-1, this, mApp->mKeybinds);
+    mKeybindsCheckbox->SetVisible(false);
 
     m09FormatCheckbox = MakeNewCheckbox(-1, this, mApp->mZeroNineBankFormat);
     m09FormatCheckbox->SetVisible(false);
@@ -120,11 +121,13 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector, bo
     mResourcePackButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(1, 233, 1);
     mResourcePackButton->SetVisible(false);
 
-    mRealHardwareAccelerationCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Real_HardwareAcceleration, this, mApp->Is3DAccelerated());
+    mRealHardwareAccelerationCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Real_HardwareAcceleration, this, mApp->mDDInterface->mIs3D);
     mRealHardwareAccelerationCheckbox->SetVisible(false);
 
     mCustomCursorCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_CustomCursor, this, mApp->mCustomCursor);
     mCustomCursorCheckbox->SetVisible(false);
+    mShowRefreshCheckbox = MakeNewCheckbox(-1, this, mApp->mShowRefresh);
+    mShowRefreshCheckbox->SetVisible(false);
 
     if (mFromGameSelector)
     {
@@ -188,7 +191,7 @@ NewOptionsDialog::~NewOptionsDialog()
     delete mDebugModeCheckbox;
     delete mDiscordCheckbox;
     delete m09FormatCheckbox;
-    delete mBankKeybindsCheckbox;
+    delete mKeybindsCheckbox;
     delete mAlmanacButton;
     delete mRestartButton;
     delete mBackToMainButton;
@@ -207,6 +210,7 @@ NewOptionsDialog::~NewOptionsDialog()
     delete mResourcePackButton;
     delete mRealHardwareAccelerationCheckbox;
     delete mCustomCursorCheckbox;
+    delete mShowRefreshCheckbox;
 }
 
 int NewOptionsDialog::GetPreferredHeight(int theWidth)
@@ -226,7 +230,7 @@ void NewOptionsDialog::AddedToManager(Sexy::WidgetManager* theWidgetManager)
     AddWidget(mHardwareAccelerationCheckbox);
     AddWidget(mDebugModeCheckbox);
     AddWidget(mDiscordCheckbox);
-    AddWidget(mBankKeybindsCheckbox);
+    AddWidget(mKeybindsCheckbox);
     AddWidget(m09FormatCheckbox);
     AddWidget(mFullscreenCheckbox);
     AddWidget(mBackToGameButton);
@@ -244,6 +248,7 @@ void NewOptionsDialog::AddedToManager(Sexy::WidgetManager* theWidgetManager)
     AddWidget(mResourcePackButton);
     AddWidget(mRealHardwareAccelerationCheckbox);
     AddWidget(mCustomCursorCheckbox);
+    AddWidget(mShowRefreshCheckbox);
 }
 
 void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
@@ -256,7 +261,7 @@ void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
     RemoveWidget(mHardwareAccelerationCheckbox);
     RemoveWidget(mDebugModeCheckbox);
     RemoveWidget(mDiscordCheckbox);
-    RemoveWidget(mBankKeybindsCheckbox);
+    RemoveWidget(mKeybindsCheckbox);
     RemoveWidget(m09FormatCheckbox);
     RemoveWidget(mBackToMainButton);
     RemoveWidget(mAdvancedButton);
@@ -276,6 +281,7 @@ void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
     RemoveWidget(mResourcePackButton);
     RemoveWidget(mRealHardwareAccelerationCheckbox);
     RemoveWidget(mCustomCursorCheckbox);
+    RemoveWidget(mShowRefreshCheckbox);
 }
 
 void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
@@ -297,8 +303,8 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
     //PAGE 1
     mDebugModeCheckbox->Resize(284, 148, 46, 39);
     mDiscordCheckbox->Resize(mDebugModeCheckbox->mX, mDebugModeCheckbox->mY + 40, 46, 39);
-    mBankKeybindsCheckbox->Resize(mDiscordCheckbox->mX, mDiscordCheckbox->mY + 40, 46, 39);
-    m09FormatCheckbox->Resize(mBankKeybindsCheckbox->mX, mBankKeybindsCheckbox->mY + 40, 46, 39);
+    mKeybindsCheckbox->Resize(mDiscordCheckbox->mX, mDiscordCheckbox->mY + 40, 46, 39);
+    m09FormatCheckbox->Resize(mKeybindsCheckbox->mX, mKeybindsCheckbox->mY + 40, 46, 39);
     //PAGE 2
     mSpeedEditWidget->Resize(ADVANCEDOPTIONS_SPEED_X + 9, ADVANCEDOPTIONS_SPEED_Y - 4, IMAGE_OPTIONS_CHECKBOX0->mWidth, IMAGE_OPTIONS_CHECKBOX0->mHeight + 4);
     mAutoCollectSunsCheckbox->Resize(mDiscordCheckbox->mX, mDiscordCheckbox->mY - 20, 46, 39);
@@ -317,6 +323,7 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
     //PAGE 4
     mRealHardwareAccelerationCheckbox->Resize(ADVANCEDOPTIONS_SPEED_X, ADVANCEDOPTIONS_SPEED_Y, 46, 39);
     mCustomCursorCheckbox->Resize(mRealHardwareAccelerationCheckbox->mX, mRealHardwareAccelerationCheckbox->mY + 40, 46, 39);
+    mShowRefreshCheckbox->Resize(mCustomCursorCheckbox->mX, mCustomCursorCheckbox->mY + 40, 46, 39);
 
     if ((!mRestartButton->mVisible || !mAlmanacButton->mVisible) && !mFromGameSelector && !mAdvancedMode)
     {
@@ -384,7 +391,7 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
             TodDrawString(g, mApp->mReconVersion, mWidth / 2, 137, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_CENTER);
             TodDrawString(g, TodStringTranslate(_S("[OPTIONS_DEBUG_MODE]")), mDebugModeCheckbox->mX - 6, mDebugModeCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
             TodDrawString(g, TodStringTranslate(_S("[OPTIONS_DISCORD_PRESENCE]")), mDiscordCheckbox->mX - 6, mDiscordCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
-            TodDrawString(g, TodStringTranslate(_S("[OPTIONS_SEED_BANK_KEYBINDS]")), mBankKeybindsCheckbox->mX - 6, mBankKeybindsCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+            TodDrawString(g, TodStringTranslate(_S("[OPTIONS_KEYBINDS]")), mKeybindsCheckbox->mX - 6, mKeybindsCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
             TodDrawString(g, TodReplaceString(_S("[OPTIONS_SEED_BANK_KEYBIND]"), _S("{KEYBIND}"), m09FormatCheckbox->mChecked ? "1-0" : "0-9"), m09FormatCheckbox->mX - 6, m09FormatCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
             TodDrawString(g, TodStringTranslate(_S("[OPTIONS_SHOVEL_KEYBIND]")), mWidth / 2, m09FormatCheckbox->mY + 55, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_CENTER);
             break;
@@ -403,6 +410,7 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
         case 4:
             TodDrawString(g, TodStringTranslate(_S("[OPTIONS_ACTUAL_ACCELERATION]")), mRealHardwareAccelerationCheckbox->mX - 6, mRealHardwareAccelerationCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
             TodDrawString(g, TodStringTranslate(_S("[OPTIONS_CUSTOM_CURSOR]")), mCustomCursorCheckbox->mX - 6, mCustomCursorCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+            TodDrawString(g, TodStringTranslate(_S("[OPTIONS_SHOW_REFRESH]")), mShowRefreshCheckbox->mX - 6, mShowRefreshCheckbox->mY + 22, FONT_DWARVENTODCRAFT18, cTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
             break;
         }
         TodDrawString(g, TodReplaceNumberString(_S("[OPTIONS_PAGE]"), _S("{PAGE}"), mAdvancedPage), mWidth / 2, ADVANCEDOPTIONS_PAGE_Y, FONT_DWARVENTODCRAFT18GREENINSET, Color::White, DrawStringJustification::DS_ALIGN_CENTER);
@@ -505,7 +513,7 @@ void NewOptionsDialog::UpdateAdvancedPage()
 
     mDebugModeCheckbox->SetVisible(false);
     mDiscordCheckbox->SetVisible(false);
-    mBankKeybindsCheckbox->SetVisible(false);
+    mKeybindsCheckbox->SetVisible(false);
     m09FormatCheckbox->SetVisible(false);
     mSpeedEditWidget->SetVisible(false);
     mAutoCollectSunsCheckbox->SetVisible(false);
@@ -518,13 +526,14 @@ void NewOptionsDialog::UpdateAdvancedPage()
     mResourcePackButton->SetVisible(false);
     mRealHardwareAccelerationCheckbox->SetVisible(false);
     mCustomCursorCheckbox->SetVisible(false);
+    mShowRefreshCheckbox->SetVisible(false);
 
     switch (mAdvancedPage)
     {
         case 1:
             mDebugModeCheckbox->SetVisible(true);
             mDiscordCheckbox->SetVisible(true);
-            mBankKeybindsCheckbox->SetVisible(true);
+            mKeybindsCheckbox->SetVisible(true);
             m09FormatCheckbox->SetVisible(true);
             break;
         case 2:
@@ -543,6 +552,7 @@ void NewOptionsDialog::UpdateAdvancedPage()
         case 4:
             mRealHardwareAccelerationCheckbox->SetVisible(true);
             mCustomCursorCheckbox->SetVisible(true);
+            mShowRefreshCheckbox->SetVisible(true);
             break;
     }
 }

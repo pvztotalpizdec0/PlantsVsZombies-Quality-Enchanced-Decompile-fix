@@ -66,8 +66,8 @@ void AchievementScreen::Draw(Graphics* g)
     for (int i = 0; i < NUM_ACHIEVEMENTS; i++)
     {
         yPosIndex++;
-        SexyString aAchievementName = StrFormat(_S("[ACHIEVEMENT_%s_TITLE]"), mApp->mAchievements->ReturnAchievementName(i).c_str());
-        SexyString aAchievementDesc = StrFormat(_S("[ACHIEVEMENT_%s_DESCRIPTION]"), mApp->mAchievements->ReturnAchievementName(i).c_str());
+        SexyString aAchievementName = StrFormat(_S("[ACHIEVEMENT_%s_TITLE]"), gAchievementDefs[i].mAchievementName);
+        SexyString aAchievementDesc = StrFormat(_S("[ACHIEVEMENT_%s_DESCRIPTION]"), gAchievementDefs[i].mAchievementName);
         int yPos = 178 + (57 * (i / 2)) + mScrollPosition;
         int xPos = 90;
         if (i % 2 != 0)

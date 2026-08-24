@@ -258,7 +258,7 @@ void SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedType, See
 	}
 }
 
-void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost)
+void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost, bool theDrawRefresh, int theRefreshTime, int theRefreshCounter)
 {
 	SeedType aSeedType = theSeedType;
 	if (aSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
@@ -579,6 +579,31 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 			g->SetLinearBlend(true);
 		}
 	}
+	if (theDrawRefresh)
+	{
+		SexyString aRefreshStr;
+		int aRefresh = (theRefreshTime - theRefreshCounter);
+		aRefreshStr = StrFormat(_S("%d.%d"), aRefresh / 100, (aRefresh % 100) / 10);
+
+		Font* aTextFont = OLD_STYLE_SEEDPACKET ? Sexy::FONT_PICO129 : Sexy::FONT_BRIANNETOD12;
+		int aTextOffsetX = 32 - aTextFont->StringWidth(aRefreshStr);
+		int aTextOffsetY = aTextFont->GetAscent() + (OLD_STYLE_SEEDPACKET ? 27 : 25);
+		if (g->mScaleX == 1.0f && g->mScaleY == 1.0f)
+		{
+			TodDrawString(g, aRefreshStr, x + aTextOffsetX, y + aTextOffsetY, aTextFont, Color(255, 0, 0), DS_ALIGN_LEFT);
+		}
+		else
+		{
+			SexyMatrix3 aMatrix;
+			TodScaleTransformMatrix(aMatrix, aTextOffsetX * g->mScaleX + x, aTextOffsetY * g->mScaleY + y, g->mScaleX, g->mScaleY);
+			if (g->mScaleX > 1.8f)
+			{
+				g->SetLinearBlend(false);
+			}
+			TodDrawStringMatrix(g, aTextFont, aMatrix, aRefreshStr, Color(255, 0, 0));
+			g->SetLinearBlend(true);
+		}
+	}
 
 	g->SetColorizeImages(false);
 }
@@ -605,8 +630,8 @@ void SeedPacket::Draw(Graphics* g)
 		Graphics aClipG(*g);
 		aClipG.ClipRect(0, 0, mWidth, mHeight);
 
-		DrawSeedPacket(&aClipG, 0.0f, aOffsetY, mPacketType, SeedType::SEED_NONE, 0.0f, 128, false, false);
-		DrawSeedPacket(&aClipG, 0.0f, mHeight + aOffsetY, mSlotMachiningNextSeed, SeedType::SEED_NONE, 0.0f, 128, false, false);
+		DrawSeedPacket(&aClipG, 0.0f, aOffsetY, mPacketType, SeedType::SEED_NONE, 0.0f, 128, false, false, false);
+		DrawSeedPacket(&aClipG, 0.0f, mHeight + aOffsetY, mSlotMachiningNextSeed, SeedType::SEED_NONE, 0.0f, 128, false, false, false);
 	}
 	else
 	{
@@ -617,9 +642,11 @@ void SeedPacket::Draw(Graphics* g)
 		}
 
 		bool aDrawCost = true;
+		bool aDrawRefresh = true;
 		if (mBoard->HasConveyorBeltSeedBank() || mApp->IsSlotMachineLevel())
 		{
 			aDrawCost = false;
+			aDrawRefresh = false;
 		}
 		int aCost = mBoard->GetCurrentPlantCost(mPacketType, mImitaterType);
 
@@ -633,6 +660,7 @@ void SeedPacket::Draw(Graphics* g)
 		{
 			aGrayness = mBoard->mSeedBank->mCutSceneDarken;
 			aPercentDark = 0.0f;
+			aDrawRefresh = false;
 		}
 		else if (mBoard->mTutorialState == TutorialState::TUTORIAL_LEVEL_1_PICK_UP_PEASHOOTER && mBoard->mTutorialTimer == -1 && mPacketType == SeedType::SEED_PEASHOOTER)
 		{
@@ -659,7 +687,16 @@ void SeedPacket::Draw(Graphics* g)
 			aGrayness = 128;
 		}
 
-		DrawSeedPacket(g, mOffsetX, 0.0f, mPacketType, mImitaterType, aPercentDark, aGrayness, aDrawCost, true);
+		if (!mRefreshing || mApp->mEasyPlantingCheat)
+		{
+			aDrawRefresh = false;
+		}
+		if (!mApp->mShowRefresh)
+		{
+			aDrawRefresh = false;
+		}
+
+		DrawSeedPacket(g, mOffsetX, 0.0f, mPacketType, mImitaterType, aPercentDark, aGrayness, aDrawCost, true, aDrawRefresh, mRefreshTime, mRefreshCounter);
 	}
 }
 
