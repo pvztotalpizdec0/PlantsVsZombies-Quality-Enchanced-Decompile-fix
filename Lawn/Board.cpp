@@ -7286,9 +7286,12 @@ void Board::DrawTopRightUI(Graphics* g)
 		}
 	}
 
-	mMenuButton->Draw(g);
-	if (HAS_FAST_FORWARD_BUTTON)
-		mFastButton->Draw(g);
+	if (!HAS_WIDESCREEN)
+	{
+		mMenuButton->Draw(g);
+		if (HAS_FAST_FORWARD_BUTTON)
+			mFastButton->Draw(g);
+	}
 
 	if (mTutorialState == TutorialState::TUTORIAL_ZEN_GARDEN_COMPLETED)
 	{
@@ -7582,6 +7585,13 @@ void Board::DrawUITop(Graphics* g)
 	if (StageHasFog())
 	{
 		DrawTopRightUI(g);
+	}
+
+	if (HAS_WIDESCREEN)
+	{
+		mMenuButton->Draw(g);
+		if (HAS_FAST_FORWARD_BUTTON)
+			mFastButton->Draw(g);
 	}
 
 	if (mTimeStopCounter > 0)
