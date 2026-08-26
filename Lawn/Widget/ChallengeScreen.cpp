@@ -172,8 +172,8 @@ ChallengeScreen::ChallengeScreen(LawnApp* theApp, ChallengePage thePage)
 	mSlider = new Slider(IMAGE_OPTIONS_SLIDERSLOT_PLANT, IMAGE_OPTIONS_SLIDERKNOB_PLANT, 0, this);
 	mSlider->SetValue(max(0.0, min(mMaxScrollPosition, mScrollPosition)));
 	mSlider->mHorizontal = false;
-	mSlider->Resize(775, cChallengeRect.mY, 20, cChallengeRect.mHeight);
-	mSlider->mThumbOffsetX = -5;
+	mSlider->Resize(775 + (HAS_WIDESCREEN ? BOARD_OFFSET_X : 0), cChallengeRect.mY, 20, cChallengeRect.mHeight);
+	mSlider->mThumbOffsetX = (HAS_WIDESCREEN ? -4 : -5);
 
 	mApp->mDetails = _S("[DISCORD_CHALLENGE_SCREEN]");
 }
@@ -365,7 +365,7 @@ void ChallengeScreen::DrawButton(Graphics* g, int theChallengeIndex)
 	{
 		aChallengeButton->mMouseVisible = cChallengeRect.Contains(mApp->mWidgetManager->mLastMouseX, mApp->mWidgetManager->mLastMouseY);
 		ChallengeDefinition& aDef = GetChallengeDefinition(theChallengeIndex);
-		aChallengeButton->mX = 38 + aDef.mRow * 155;
+		aChallengeButton->mX = (HAS_WIDESCREEN ? 70 : 38) + aDef.mRow * 155 + (HAS_WIDESCREEN ? (BOARD_OFFSET_X / 2) : 0);
 		mButtonYStartOffset = cChallengeRect.mY + (aDef.mPage == CHALLENGE_PAGE_SURVIVAL ? 34 : 2);
 		mButtonYOffset = cButtonHeight + (aDef.mPage == CHALLENGE_PAGE_SURVIVAL ? 30 : 2);
 		aChallengeButton->mY = mButtonYStartOffset + aDef.mCol * mButtonYOffset - mScrollPosition;
@@ -470,12 +470,12 @@ void ChallengeScreen::Draw(Graphics* g)
 	g->SetLinearBlend(true);
 	g->DrawImage(Sexy::IMAGE_CHALLENGE_BACKGROUND, 0, 0);
 
-	TodDrawString(g, GetPageTitle(mPageIndex), 400, 58, Sexy::FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
+	TodDrawString(g, GetPageTitle(mPageIndex), (HAS_WIDESCREEN ? 420 + (BOARD_OFFSET_X / 2) : 400), 58, Sexy::FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
 
 	int aTrophiesGot = mApp->GetNumTrophies(mPageIndex);
 	int aTrophiesTotal = mApp->GetTotalTrophies(mPageIndex);
-	TodDrawString(g, aTrophiesTotal > 0 ? StrFormat(_S("%d/%d"), aTrophiesGot, aTrophiesTotal) : TodStringTranslate(_S("[TROPHY_NONE]")), 739, 73, Sexy::FONT_DWARVENTODCRAFT15, Color(255, 240, 0), DS_ALIGN_CENTER);
-	TodDrawImageScaledF(g, Sexy::IMAGE_TROPHY, 718, 26, 0.5f, 0.5f);
+	TodDrawString(g, aTrophiesTotal > 0 ? StrFormat(_S("%d/%d"), aTrophiesGot, aTrophiesTotal) : TodStringTranslate(_S("[TROPHY_NONE]")), 739 + BOARD_ADDITIONAL_WIDTH, 73, Sexy::FONT_DWARVENTODCRAFT15, Color(255, 240, 0), DS_ALIGN_CENTER);
+	TodDrawImageScaledF(g, Sexy::IMAGE_TROPHY, 718 + BOARD_ADDITIONAL_WIDTH, 26, 0.5f, 0.5f);
 
 	int aHighestColumn = 0;
 	for (int aChallengeMode = 0; aChallengeMode < NUM_CHALLENGE_MODES; aChallengeMode++)

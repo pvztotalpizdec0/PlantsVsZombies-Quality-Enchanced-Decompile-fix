@@ -30,7 +30,7 @@ AchievementScreen::AchievementScreen(LawnApp* theApp)
 
     mRockButton = MakeNewButton(1, this, "", nullptr, Sexy::IMAGE_ACHIEVEMENT_MORE,
         Sexy::IMAGE_ACHIEVEMENT_MORE_HIGHLIGHT, Sexy::IMAGE_ACHIEVEMENT_MORE_HIGHLIGHT);
-    mRockButton->Resize(710, 470 + mScrollPosition, IMAGE_ACHIEVEMENT_MORE->mWidth, IMAGE_ACHIEVEMENT_MORE->mHeight);
+    mRockButton->Resize(710 + BOARD_ADDITIONAL_WIDTH, 470 + mScrollPosition, IMAGE_ACHIEVEMENT_MORE->mWidth, IMAGE_ACHIEVEMENT_MORE->mHeight);
 }
 
 AchievementScreen::~AchievementScreen()
@@ -51,28 +51,28 @@ void AchievementScreen::Draw(Graphics* g)
            g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_TILE_CHINA, 0, Sexy::IMAGE_ACHIEVEMENT_TILE_CHINA->mHeight * i + mScrollPosition - 30);
        }
        else
-            g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_TILE, 0, Sexy::IMAGE_ACHIEVEMENT_TILE->mHeight * i + mScrollPosition);
+            g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_TILE, 0, Sexy::IMAGE_ACHIEVEMENT_TILE->mHeight * i + mScrollPosition - (HAS_WIDESCREEN ? 100 : 0));
     }
    g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_ROCK, mRockButton->mX, mRockButton->mY);
 
    //positions from re-plants-vs-zombies (by @Patoke)
-   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_BOOKWORM, 0, 1125 + mScrollPosition);
-   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_BEJEWELED, 0, 2250 + mScrollPosition);
-   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_CHUZZLE, 0, 4500 + mScrollPosition);
-   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_PEGGLE, 0, 6750 + mScrollPosition);
-   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_PIPE, 0, 9000 + mScrollPosition);
-   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_ZUMA, 0, 11250 + mScrollPosition);
+   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_BOOKWORM, BOARD_ADDITIONAL_WIDTH, 1125 + mScrollPosition);
+   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_BEJEWELED, BOARD_ADDITIONAL_WIDTH, 2250 + mScrollPosition);
+   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_CHUZZLE, BOARD_ADDITIONAL_WIDTH, 4500 + mScrollPosition);
+   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_PEGGLE, BOARD_ADDITIONAL_WIDTH, 6750 + mScrollPosition);
+   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_PIPE, BOARD_ADDITIONAL_WIDTH, 9000 + mScrollPosition);
+   g->DrawImage(Sexy::IMAGE_ACHIEVEMENT_ZUMA, BOARD_ADDITIONAL_WIDTH, 11250 + mScrollPosition);
 
     for (int i = 0; i < NUM_ACHIEVEMENTS; i++)
     {
         yPosIndex++;
         SexyString aAchievementName = StrFormat(_S("[ACHIEVEMENT_%s_TITLE]"), gAchievementDefs[i].mAchievementName);
         SexyString aAchievementDesc = StrFormat(_S("[ACHIEVEMENT_%s_DESCRIPTION]"), gAchievementDefs[i].mAchievementName);
-        int yPos = 178 + (57 * (i / 2)) + mScrollPosition;
-        int xPos = 90;
+        int yPos = (HAS_WIDESCREEN ? 168 :178) + (57 * (i / 2)) + mScrollPosition;
+        int xPos = 90 + BOARD_ADDITIONAL_WIDTH;
         if (i % 2 != 0)
         {
-            xPos = 380;
+            xPos = 380 + BOARD_ADDITIONAL_WIDTH;
         }
         xPos += 120;
         TodDrawString(g, aAchievementName, xPos - 20, yPos + 16, Sexy::FONT_DWARVENTODCRAFT15, Color(21, 175, 0), DS_ALIGN_LEFT);
@@ -135,12 +135,12 @@ void AchievementScreen::Update()
         DoButtonMovement(mScrollPosition, direction);
     }
 
-    mMaxScrollPosition = 15342;//Sexy::IMAGE_ACHIEVEMENT_TILE->mHeight * 69 + Sexy::IMAGE_ACHIEVEMENT_TILE_CHINA->mHeight;
+    mMaxScrollPosition = (HAS_WIDESCREEN ? 19628 : 15342);//Sexy::IMAGE_ACHIEVEMENT_TILE->mHeight * 69 + Sexy::IMAGE_ACHIEVEMENT_TILE_CHINA->mHeight;
     float aScrollSpeed = mBaseScrollSpeed + abs(mScrollAmount) * mScrollAccel;
     mScrollPosition = ClampFloat(mScrollPosition -= mScrollAmount * aScrollSpeed, -mMaxScrollPosition, 0);
     mScrollAmount *= (1.0f - mScrollAccel);
-    mBackButton->Resize(128, 55 + mScrollPosition, 130, 80);
-    mRockButton->Resize(710, 470 + mScrollPosition, IMAGE_ACHIEVEMENT_MORE->mWidth, IMAGE_ACHIEVEMENT_MORE->mHeight);
+    mBackButton->Resize(128 + BOARD_ADDITIONAL_WIDTH, 55 + mScrollPosition, 130, 80);
+    mRockButton->Resize(710 + BOARD_ADDITIONAL_WIDTH + (HAS_WIDESCREEN ? 90 : 0), 470 + mScrollPosition, IMAGE_ACHIEVEMENT_MORE->mWidth, IMAGE_ACHIEVEMENT_MORE->mHeight);
 }
 
 void AchievementScreen::ButtonDepress(int theId)

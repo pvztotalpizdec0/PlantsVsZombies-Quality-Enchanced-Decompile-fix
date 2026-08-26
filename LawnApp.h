@@ -137,6 +137,7 @@ public:
 	time_t							mStartTime;
 	SexyString                      mDetails;
 	SexyString                      mState;
+	bool							mHasWidescreen;
 
 public:
 	LawnApp();

@@ -36,10 +36,10 @@ QuickPlayScreen::QuickPlayScreen(LawnApp* theApp)
         Sexy::IMAGE_QUICKPLAY_BACK_HIGHLIGHT, Sexy::IMAGE_QUICKPLAY_BACK_HIGHLIGHT);
 
     mLeftButton = MakeNewButton(1, this, "", nullptr, Sexy::IMAGE_QUICKPLAY_LEFT_BUTTON,
-        Sexy::IMAGE_QUICKPLAY_LEFT_BUTTON_HIGHLIGHT, Sexy::IMAGE_QUICKPLAY_LEFT_BUTTON_HIGHLIGHT);
+        Sexy::IMAGE_QUICKPLAY_LEFT_BUTTON, Sexy::IMAGE_QUICKPLAY_LEFT_BUTTON_HIGHLIGHT);
 
     mRightButton = MakeNewButton(2, this, "", nullptr, Sexy::IMAGE_QUICKPLAY_RIGHT_BUTTON,
-        Sexy::IMAGE_QUICKPLAY_RIGHT_BUTTON_HIGHLIGHT, Sexy::IMAGE_QUICKPLAY_RIGHT_BUTTON_HIGHLIGHT);
+        Sexy::IMAGE_QUICKPLAY_RIGHT_BUTTON, Sexy::IMAGE_QUICKPLAY_RIGHT_BUTTON_HIGHLIGHT);
 
     mPlayButton = MakeButton(3, this, _S("[PLAY_BUTTON]"));
 
@@ -59,17 +59,17 @@ QuickPlayScreen::QuickPlayScreen(LawnApp* theApp)
     mFlowerPot->PlantInitialize(0, 0, SEED_FLOWERPOT, SEED_NONE);
 
     ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_HAMMER, true);
-    Reanimation* aHammerReanim = mApp->AddReanimation(250.0f, 280.0f, 0, ReanimationType::REANIM_HAMMER);
+    Reanimation* aHammerReanim = mApp->AddReanimation(250.0f + BOARD_ADDITIONAL_WIDTH, 280.0f, 0, ReanimationType::REANIM_HAMMER);
     aHammerReanim->mIsAttachment = true;
     aHammerReanim->PlayReanim("anim_whack_zombie", ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
     aHammerReanim->mAnimTime = 1.0f;
     mHammerID = mApp->ReanimationGetID(aHammerReanim);
 
-    mBackButton->Resize(278, 528, IMAGE_QUICKPLAY_BACK_HIGHLIGHT->mWidth, IMAGE_QUICKPLAY_BACK_HIGHLIGHT->mHeight);
-    mLeftButton->Resize(373, 380, IMAGE_QUICKPLAY_LEFT_BUTTON->mWidth, IMAGE_QUICKPLAY_LEFT_BUTTON->mHeight);
+    mBackButton->Resize((HAS_WIDESCREEN ? 411 : 278), 528, IMAGE_QUICKPLAY_BACK_HIGHLIGHT->mWidth, IMAGE_QUICKPLAY_BACK_HIGHLIGHT->mHeight);
+    mLeftButton->Resize((HAS_WIDESCREEN ? 373 : 363) + BOARD_ADDITIONAL_WIDTH, 380, IMAGE_QUICKPLAY_LEFT_BUTTON->mWidth, IMAGE_QUICKPLAY_LEFT_BUTTON->mHeight);
     mPlayButton->Resize(mLeftButton->mX + mLeftButton->mWidth + 20, mLeftButton->mY, 163, 46);
-    mRightButton->Resize(mPlayButton->mX + mPlayButton->mWidth + 20, mPlayButton->mY, IMAGE_QUICKPLAY_RIGHT_BUTTON->mWidth, IMAGE_QUICKPLAY_RIGHT_BUTTON->mHeight);
-    mCrazySeedsCheck->Resize(130, mRightButton->mY + 2, 50, 50);
+    mRightButton->Resize(mPlayButton->mX + mPlayButton->mWidth + (HAS_WIDESCREEN ? 15 : 20), mPlayButton->mY, IMAGE_QUICKPLAY_RIGHT_BUTTON->mWidth, IMAGE_QUICKPLAY_RIGHT_BUTTON->mHeight);
+    mCrazySeedsCheck->Resize(130 + BOARD_ADDITIONAL_WIDTH, mRightButton->mY + 2, 50, 50);
 
     ChooseBackground();
     ResetZombie();
@@ -90,7 +90,7 @@ QuickPlayScreen::~QuickPlayScreen()
 void QuickPlayScreen::Draw(Graphics* g)
 {
     g->DrawImage(Sexy::IMAGE_QUICKPLAY_BACKGROUND, 0, 0);
-    g->SetClipRect(130, 30, 530, 370);
+    g->SetClipRect(130 + BOARD_ADDITIONAL_WIDTH, 30, 530, 370);
     switch (mBackground)
     {
     case BackgroundType::BACKGROUND_1_DAY:				g->DrawImage(Sexy::IMAGE_BACKGROUND1, -130, 0);                       break;
@@ -114,14 +114,14 @@ void QuickPlayScreen::Draw(Graphics* g)
             if (mApp->mQuickLevel == 25) {
                 mDisplayZombie->mScaleZombie = 0.5f;
             }
-            mDisplayZombie->mPosX = 340;
+            mDisplayZombie->mPosX = 340 + BOARD_ADDITIONAL_WIDTH;
             mDisplayZombie->mPosY = 240;
             if (mBackground == BACKGROUND_3_POOL || mBackground == BACKGROUND_4_FOG)
             {
                 mDisplayZombie->mPosY -= 120;
             }
             if (mZombieType == ZOMBIE_BOSS) {
-                mDisplayZombie->mPosX = -100;
+                mDisplayZombie->mPosX = -100 + BOARD_ADDITIONAL_WIDTH;
                 mDisplayZombie->mPosY = -20;
             }
             if (mDisplayZombie->BeginDraw(&aZombieGraphics))
@@ -139,7 +139,7 @@ void QuickPlayScreen::Draw(Graphics* g)
         if (mBackground == BACKGROUND_5_ROOF || mBackground == BACKGROUND_6_BOSS)
         {
             Graphics aPotGraphics = Graphics(*g);
-            mFlowerPot->mX = 280;
+            mFlowerPot->mX = 280 + BOARD_ADDITIONAL_WIDTH;
             mFlowerPot->mY = 280;
             if (mFlowerPot->BeginDraw(&aPotGraphics))
             {
@@ -153,7 +153,7 @@ void QuickPlayScreen::Draw(Graphics* g)
         if (mApp->mQuickLevel != 35 && mApp->mQuickLevel != 15) {
             Graphics aPlantGraphics = Graphics(*g);
 
-            mDisplayPlant->mX = 280;
+            mDisplayPlant->mX = 280 + BOARD_ADDITIONAL_WIDTH;
             mDisplayPlant->mY = 280;
             if ((mBackground == BACKGROUND_3_POOL || mBackground == BACKGROUND_4_FOG) && !mDisplayPlant->IsAquatic(mDisplayPlant->mSeedType))
             {
@@ -172,7 +172,7 @@ void QuickPlayScreen::Draw(Graphics* g)
     }
     if (mApp->mQuickLevel == 5)
     {
-        g->DrawImage(Sexy::IMAGE_WALLNUT_BOWLINGSTRIPE, 268, 77);
+        g->DrawImage(Sexy::IMAGE_WALLNUT_BOWLINGSTRIPE, 268 + BOARD_ADDITIONAL_WIDTH, 77);
     }
     if (mApp->mQuickLevel == 15)
     {
@@ -180,12 +180,12 @@ void QuickPlayScreen::Draw(Graphics* g)
     }
     if (mApp->mQuickLevel == 35)
     {
-        g->DrawImageCel(IMAGE_SCARY_POT, 370, 270, 0, 1);
-        g->DrawImageCel(IMAGE_SCARY_POT, 290, 270, 1, 1);
+        g->DrawImageCel(IMAGE_SCARY_POT, 370 + BOARD_ADDITIONAL_WIDTH, 270, 0, 1);
+        g->DrawImageCel(IMAGE_SCARY_POT, 290 + BOARD_ADDITIONAL_WIDTH, 270, 1, 1);
     }
     g->ClearClipRect();
-    int posX = 100;
-    g->DrawImage(Sexy::IMAGE_QUICKPLAY_WIDGET, posX, 0);
+    int posX = 100 + BOARD_ADDITIONAL_WIDTH;
+    g->DrawImage(Sexy::IMAGE_QUICKPLAY_WIDGET, posX + (HAS_WIDESCREEN ? 8 : 0), (HAS_WIDESCREEN ? 8 : 0));
     TodDrawString(g, mApp->GetStageString(mApp->mQuickLevel).erase(0, 1), posX + (Sexy::IMAGE_QUICKPLAY_WIDGET->mWidth / 2), 30, Sexy::FONT_DWARVENTODCRAFT18GREENINSET, Color::White, DS_ALIGN_CENTER);
     TodDrawString(g, TodStringTranslate(_S("[CRAZY_DAVE_SEEDS]")), mCrazySeedsCheck->mX + 45, mCrazySeedsCheck->mY + 23, Sexy::FONT_DWARVENTODCRAFT18GREENINSET, Color::White, DS_ALIGN_LEFT);
 }
@@ -212,8 +212,18 @@ void QuickPlayScreen::KeyDown(KeyCode theKey) {
 
 void QuickPlayScreen::DrawPool(Graphics* g, bool isNight)
 {
-    g->SetClipRect(135 - mX, 30, 500, 370);
+    g->SetClipRect(135 + BOARD_ADDITIONAL_WIDTH - mX, 30, (HAS_WIDESCREEN ? 450 : 500), 370);
+    if (HAS_WIDESCREEN)
+    {
+        int aOffsetX = BOARD_ADDITIONAL_WIDTH / 2 - 20;
+        g->mTransX += aOffsetX;
+    }
     mApp->mPoolEffect->PoolEffectDraw(g, isNight);
+    if (HAS_WIDESCREEN)
+    {
+        int aOffsetX = BOARD_ADDITIONAL_WIDTH / 2 - 20;
+        g->mTransX -= aOffsetX;
+    }
     g->ClearClipRect();
 }
 

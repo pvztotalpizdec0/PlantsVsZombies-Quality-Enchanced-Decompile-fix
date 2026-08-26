@@ -150,6 +150,7 @@ LawnApp::LawnApp()
 	mCrazyDaveMessageIndex = -1;
 	mBigArrowCursor = LoadCursor(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDC_CURSOR1));
 	mPlayingQuickplay = false;
+	mHasWidescreen = true;
 }
 
 LawnApp::~LawnApp()
@@ -2707,7 +2708,7 @@ void LawnApp::CrazyDaveEnter()
 	TOD_ASSERT(mCrazyDaveState == CRAZY_DAVE_OFF);
 	TOD_ASSERT(!ReanimationTryToGet(mCrazyDaveReanimID));
 
-	Reanimation* aCrazyDaveReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CRAZY_DAVE);
+	Reanimation* aCrazyDaveReanim = AddReanimation(BOARD_ADDITIONAL_WIDTH, 0.0f, 0, ReanimationType::REANIM_CRAZY_DAVE);
 	aCrazyDaveReanim->mIsAttachment = true;
 	aCrazyDaveReanim->SetBasePoseFromAnim("anim_idle_handing");
 	mCrazyDaveReanimID = ReanimationGetID(aCrazyDaveReanim);
@@ -3148,7 +3149,7 @@ void LawnApp::DrawCrazyDave(Graphics* g)
 	if (mCrazyDaveMessageText.size())
 	{
 		Image* aBubbleImage = IMAGE_STORE_SPEECHBUBBLE2;
-		int aPosX = 285;
+		int aPosX = 285 + BOARD_ADDITIONAL_WIDTH;
 		int aPosY = 20;
 		if (GetDialog(Dialogs::DIALOG_STORE))
 		{
@@ -3158,7 +3159,7 @@ void LawnApp::DrawCrazyDave(Graphics* g)
 		}
 		else if (mGameMode == GameMode::GAMEMODE_UPSELL)
 		{
-			aPosX += 130;
+			aPosX += 130 + BOARD_ADDITIONAL_WIDTH;
 			aPosY += 70;
 		}
 		g->DrawImage(aBubbleImage, aPosX, aPosY);

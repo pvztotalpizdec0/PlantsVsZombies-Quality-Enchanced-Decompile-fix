@@ -941,6 +941,9 @@
     <ClCompile Include="..\Lawn\Widget\QuickPlayScreen.cpp">
       <Filter>Lawn\Widget\Widget Source</Filter>
     </ClCompile>
+	<ClCompile Include="..\Lawn\Bush.cpp">
+      <Filter>Lawn\Board\Board Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\Lawn\Widget\ChallengePagesDialog.cpp">
       <Filter>Lawn\Widget\Widget Source</Filter>
     </ClCompile>
@@ -1622,6 +1625,9 @@
     </ClInclude>
     <ClInclude Include="..\Lawn\Widget\QuickPlayScreen.h">
       <Filter>Lawn\Widget\Widget Include</Filter>
+    </ClInclude>
+	<ClInclude Include="..\Lawn\Bush.h">
+      <Filter>Lawn\Board\Board Include</Filter>
     </ClInclude>
     <ClInclude Include="..\Lawn\Widget\ChallengePagesDialog.h">
       <Filter>Lawn\Widget\Widget Include</Filter>

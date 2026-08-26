@@ -241,7 +241,7 @@ void Projectile::CheckForCollision()
 		return;
 	}
 
-	if (mPosX > WIDE_BOARD_WIDTH || mPosX + mWidth < 0.0f)
+	if (mPosX > WIDE_BOARD_WIDTH || mPosX + mWidth < 0.0f + BOARD_ADDITIONAL_WIDTH)
 	{
 		Die();
 		return;

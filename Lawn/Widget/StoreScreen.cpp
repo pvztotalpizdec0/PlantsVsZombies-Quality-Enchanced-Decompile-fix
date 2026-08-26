@@ -79,7 +79,7 @@ StoreScreen::StoreScreen(LawnApp* theApp) : Dialog(nullptr, nullptr, DIALOG_STOR
     mBackButton->SetFont(Sexy::FONT_HOUSEOFTERROR20);
     mBackButton->mColors[ButtonWidget::COLOR_LABEL] = Color(98, 153, 235);
     mBackButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(167, 192, 235);
-    mBackButton->Resize(366, 512, aMenuImage->mWidth, aMenuImage->mHeight);
+    mBackButton->Resize((HAS_WIDESCREEN ? 310 + BOARD_OFFSET_X : 366), 512, aMenuImage->mWidth, aMenuImage->mHeight);
     mBackButton->mTextOffsetX = -7;
     mBackButton->mTextOffsetY = 1;
     mBackButton->mTextDownOffsetX = 2;
@@ -94,7 +94,7 @@ StoreScreen::StoreScreen(LawnApp* theApp) : Dialog(nullptr, nullptr, DIALOG_STOR
     mPrevButton->mDownImage = Sexy::IMAGE_STORE_PREVBUTTONHIGHLIGHT;
     mPrevButton->mColors[ButtonWidget::COLOR_LABEL] = Color(255, 240, 0);
     mPrevButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(200, 200, 255);
-    mPrevButton->Resize(252, 402, aPrevImage->mWidth, aPrevImage->mHeight);
+    mPrevButton->Resize((HAS_WIDESCREEN ? 163 + BOARD_OFFSET_X : 252), (HAS_WIDESCREEN ? 404 : 402), aPrevImage->mWidth, aPrevImage->mHeight);
 
     mNextButton = new NewLawnButton(nullptr, StoreScreen::StoreScreen_Next, this);
     mNextButton->mDoFinger = true;
@@ -105,7 +105,7 @@ StoreScreen::StoreScreen(LawnApp* theApp) : Dialog(nullptr, nullptr, DIALOG_STOR
     mNextButton->mDownImage = Sexy::IMAGE_STORE_NEXTBUTTONHIGHLIGHT;
     mNextButton->mColors[ButtonWidget::COLOR_LABEL] = Color(255, 240, 0);
     mNextButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(200, 200, 255);
-    mNextButton->Resize(596, 402, aNextImage->mWidth, aNextImage->mHeight);
+    mNextButton->Resize((HAS_WIDESCREEN ? 505 + BOARD_OFFSET_X : 596), 402, aNextImage->mWidth, aNextImage->mHeight);
 
     mOverlayWidget = new StoreScreenOverlay(this);
     mOverlayWidget->Resize(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
@@ -435,26 +435,26 @@ void StoreScreen::Draw(Graphics* g)
 
     if (!mHatchTimer && mHatchOpen)
     {
-        g->DrawImage(Sexy::IMAGE_STORE_CAR, mShakeX + 196, mShakeY + 138);
-        g->DrawImage(Sexy::IMAGE_STORE_HATCHBACKOPEN, mShakeX + 299, mShakeY);
+        g->DrawImage(Sexy::IMAGE_STORE_CAR, mShakeX + (HAS_WIDESCREEN ? 106 + BOARD_OFFSET_X : 196), mShakeY + 138);
+        g->DrawImage(Sexy::IMAGE_STORE_HATCHBACKOPEN, mShakeX + (HAS_WIDESCREEN ? 209 + BOARD_OFFSET_X : 299), mShakeY);
         if (mApp->mBoard != nullptr && mApp->mBoard->StageIsNight())
         {
-            g->DrawImage(Sexy::IMAGE_STORE_CAR_NIGHT, mShakeX + 668, mShakeY + 193);
+            g->DrawImage(Sexy::IMAGE_STORE_CAR_NIGHT, mShakeX + (HAS_WIDESCREEN ? 106 + BOARD_OFFSET_X : 668), mShakeY + (HAS_WIDESCREEN ? 138 : 193));
         }
     }
     else
     {
-        g->DrawImage(Sexy::IMAGE_STORE_CARCLOSED, mShakeX + 196, mShakeY + 138);
+        g->DrawImage(Sexy::IMAGE_STORE_CARCLOSED, mShakeX + (HAS_WIDESCREEN ? 106 + BOARD_OFFSET_X : 196), mShakeY + 138);
         if (mApp->mBoard != nullptr && mApp->mBoard->StageIsNight())
         {
-            g->DrawImage(Sexy::IMAGE_STORE_CAR_NIGHT, mShakeX + 668, mShakeY + 193);
-            g->DrawImage(Sexy::IMAGE_STORE_CARCLOSED_NIGHT, mShakeX + 337, mShakeY + 187);
+            g->DrawImage(Sexy::IMAGE_STORE_CAR_NIGHT, mShakeX + (HAS_WIDESCREEN ? 106 + BOARD_OFFSET_X : 668), mShakeY + (HAS_WIDESCREEN ? 138 : 193));
+            g->DrawImage(Sexy::IMAGE_STORE_CARCLOSED_NIGHT, mShakeX + (HAS_WIDESCREEN ? 106 + BOARD_OFFSET_X : 337), mShakeY + (HAS_WIDESCREEN ? 138 : 187));
         }
     }
-    g->DrawImage(Sexy::IMAGE_STORE_SIGN, 285, aStoreSignPosY);
+    g->DrawImage(Sexy::IMAGE_STORE_SIGN, 285 + (HAS_WIDESCREEN ? BOARD_OFFSET_X : 0), aStoreSignPosY);
 
     Graphics gCrazyDave = Graphics(*g);
-    gCrazyDave.mTransX -= 42.0f;
+    gCrazyDave.mTransX -= 42.0f + BOARD_ADDITIONAL_WIDTH / 2;
     gCrazyDave.mTransY += 68.0f;
     mApp->DrawCrazyDave(&gCrazyDave);
 
@@ -1071,7 +1071,7 @@ void StoreScreen::AdvanceCrazyDaveDialog()
         mApp->WriteCurrentUserConfig();
         mApp->PlaySample(Sexy::SOUND_DIAMOND);
         Coin* aCoin = mCoins.DataArrayAlloc();
-        aCoin->CoinInitialize(80, 520, COIN_DIAMOND, COIN_MOTION_FROM_PRESENT);
+        aCoin->CoinInitialize((HAS_WIDESCREEN ? 178 + BOARD_ADDITIONAL_WIDTH / 2 : 80), (HAS_WIDESCREEN ? 510 : 520), COIN_DIAMOND, COIN_MOTION_FROM_PRESENT);
         aCoin->mVelX = 0;
         aCoin->mVelY = -5;
     }

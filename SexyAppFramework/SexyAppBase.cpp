@@ -181,7 +181,7 @@ SexyAppBase::SexyAppBase()
 	mExitToTop = false;
 	mWidth = 640;
 	mHeight = 480;
-	mFullscreenBits = 16;
+	mFullscreenBits = (HAS_WIDESCREEN ? 32 : 16);
 	mIsWindowed = true;
 	mIsPhysWindowed = true;
 	mFullScreenWindow = false;
@@ -292,7 +292,7 @@ SexyAppBase::SexyAppBase()
 	mRelaxUpdateBacklogCount = 0;
 	mWidescreenAware = false;
 	mEnableWindowAspect = false;
-	mWindowAspect.Set(4, 3);
+	mWindowAspect.Set((HAS_WIDESCREEN ? 16 : 4), (HAS_WIDESCREEN ? 9 : 3));
 	mIsWideWindow = false;
 	mAspectCorrect = true;
 	mAspectNoStretch = false;

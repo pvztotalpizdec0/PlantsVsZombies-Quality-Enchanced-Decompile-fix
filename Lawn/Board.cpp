@@ -45,6 +45,12 @@ Board::Board(LawnApp* theApp)
 	TodHesitationTrace("preboard");
 
 	mZombies.DataArrayInitialize(1024U, "zombies");
+	if (HAS_WIDESCREEN)
+	{
+		mBushes.DataArrayInitialize(32U, "bushes");
+		for (int i = 0; i < MAX_GRID_SIZE_Y; i++)
+			mBushList[i] = mBushes.DataArrayAlloc();
+	}
 	mPlants.DataArrayInitialize(1024U, "plants");
 	mProjectiles.DataArrayInitialize(1024U, "projectiles");
 	mCoins.DataArrayInitialize(1024U, "coins");
@@ -160,8 +166,9 @@ Board::Board(LawnApp* theApp)
 	mMenuButton = new GameButton(0);
 	mMenuButton->mDrawStoneButton = true;
 	mMenuButton->mParentWidget = this;
+	int aButtonOffsetX = BOARD_ADDITIONAL_WIDTH * 2;
 	mFastButton = new GameButton(2);
-	mFastButton->Resize(740, 30, IMAGE_FASTBUTTON->mWidth, 46);
+	mFastButton->Resize(740 + aButtonOffsetX, 30, IMAGE_FASTBUTTON->mWidth, 46);
 	mFastButton->mParentWidget = this;
 	mStoreButton = nullptr;
 	mIgnoreMouseUp = false;
@@ -173,23 +180,25 @@ Board::Board(LawnApp* theApp)
 	mCoinFaded = false;
 	mAchievementCoinCount = 0;
 	mGargantuarsKilled = 0;
+	mRoofPoleOffset = ROOF_POLE_START;
+	mRoofTreeOffset = ROOF_TREE_START;
 
 	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
 	{
 		mMenuButton->mLabel = _S("[MAIN_MENU_BUTTON]");
-		mMenuButton->Resize(628, -10, 163, 46);
+		mMenuButton->Resize(628 + aButtonOffsetX, -10, 163, 46);
 
 		mStoreButton = new GameButton(1);
 		mStoreButton->mButtonImage = IMAGE_ZENSHOPBUTTON;
 		mStoreButton->mOverImage = IMAGE_ZENSHOPBUTTON_HIGHLIGHT;
 		mStoreButton->mDownImage = IMAGE_ZENSHOPBUTTON_HIGHLIGHT;
-		mStoreButton->Resize(678, 33, IMAGE_ZENSHOPBUTTON->mWidth, 40);
+		mStoreButton->Resize(678 + aButtonOffsetX, 33, IMAGE_ZENSHOPBUTTON->mWidth, 40);
 		mStoreButton->mParentWidget = this;
 	}
 	else
 	{
 		mMenuButton->mLabel = _S("[MENU_BUTTON]");
-		mMenuButton->Resize(681, -10, 117, 46);
+		mMenuButton->Resize(681 + aButtonOffsetX, -10, 117, 46);
 		mFastButton->mBtnNoDraw = true;
 	}
 
@@ -205,7 +214,7 @@ Board::Board(LawnApp* theApp)
 	if (mApp->mGameMode == GameMode::GAMEMODE_UPSELL)
 	{
 		mMenuButton->mLabel = _S("[MAIN_MENU_BUTTON]");
-		mMenuButton->Resize(628, -10, 163, 46);
+		mMenuButton->Resize(628 + aButtonOffsetX, -10, 163, 46);
 		mMenuButton->mBtnNoDraw = true;
 
 		mStoreButton = new GameButton(1);
@@ -235,6 +244,8 @@ Board::~Board()
 		delete mFastButton;
 	}
 	mZombies.DataArrayDispose();
+	if (HAS_WIDESCREEN)
+		mBushes.DataArrayDispose();
 	mPlants.DataArrayDispose();
 	mProjectiles.DataArrayDispose();
 	mCoins.DataArrayDispose();
@@ -369,6 +380,23 @@ bool Board::LoadGame(const string& theFileName)
 	UpdateLayers();		
 	if (mApp->mGameScene == GameScenes::SCENE_PLAYING)
 		mFastButton->mBtnNoDraw = false;
+	if (HAS_WIDESCREEN)
+	{
+		for (int bushIndex = 0; bushIndex < MAX_GRID_SIZE_Y; bushIndex++)
+		{
+			Bush* loadedBush = nullptr;
+			while (IterateBushes(loadedBush))
+			{
+				if (loadedBush->mID == bushIndex)
+					mBushList[bushIndex] = loadedBush;
+			}
+			if (mBushList[bushIndex] == nullptr)
+			{
+				AddBushes();
+				break;
+			}
+		}
+	}
 	return true;
 }
 
@@ -1120,6 +1148,15 @@ void Board::PickBackground()
 		}
 	}
 	PickSpecialGraveStone();
+
+	if (StageHasBushes())
+		AddBushes();
+}
+
+void Board::AddBushes()
+{
+	for (int i = 0; i < MAX_GRID_SIZE_Y; i++)
+		mBushList[i]->BushInitialize(i, StageIsNight());
 }
 
 void Board::InitZombieWavesForLevel(int theForLevel)
@@ -1514,7 +1551,7 @@ void Board::InitLevel()
 	if (StageHasFog())
 	{
 		mFogBlownCountDown = 200;
-		mFogOffset = 1065 - LeftFogColumn() * 80;
+		mFogOffset = 1065 - LeftFogColumn() * (HAS_WIDESCREEN ? 70 : 80);
 	}
 	mChallenge->InitLevel();
 }
@@ -2590,7 +2627,7 @@ bool Board::CanAddBobSled()
 {
 	for (int aRow = 0; aRow < MAX_GRID_SIZE_Y; aRow++)
 	{
-		if (mIceTimer[aRow] > 0 && mIceMinX[aRow] < 700)
+		if (mIceTimer[aRow] > 0 && mIceMinX[aRow] < 700 + BOARD_ADDITIONAL_WIDTH)
 		{
 			return true;
 		}
@@ -2598,7 +2635,7 @@ bool Board::CanAddBobSled()
 	return false;
 }
 
-Zombie* Board::AddZombieInRow(ZombieType theZombieType, int theRow, int theFromWave)
+Zombie* Board::AddZombieInRow(ZombieType theZombieType, int theRow, int theFromWave, bool skipBushAnimation)
 {
 	if (mZombies.mSize >= mZombies.mMaxSize - 1)
 	{
@@ -2614,15 +2651,28 @@ Zombie* Board::AddZombieInRow(ZombieType theZombieType, int theRow, int theFromW
 	{
 		for (int _i = 0; _i < 3; _i++)
 		{
-			mZombies.DataArrayAlloc()->ZombieInitialize(theRow, ZombieType::ZOMBIE_BOBSLED, false, aZombie, theFromWave);
+			mZombies.DataArrayAlloc()->ZombieInitialize(theRow, ZombieType::ZOMBIE_BOBSLED, false, aZombie, theFromWave, !skipBushAnimation && StageHasBushes() && mApp->mGameScene == GameScenes::SCENE_PLAYING);
 		}
 	}
 	return aZombie;
 }
 
-Zombie* Board::AddZombie(ZombieType theZombieType, int theFromWave)
+Zombie* Board::AddZombie(ZombieType theZombieType, int theFromWave, bool skipBushAnimation)
 {
-	return AddZombieInRow(theZombieType, PickRowForNewZombie(theZombieType), theFromWave); 
+	return AddZombieInRow(theZombieType, PickRowForNewZombie(theZombieType), theFromWave, skipBushAnimation);
+}
+
+void Board::AnimateBush(int mRow) {
+	Bush* aBush = mBushList[mRow];
+	if (aBush == nullptr || mApp->mGameMode == GAMEMODE_CHALLENGE_INVISIGHOUL || !StageHasBushes())
+		return;
+
+	aBush->AnimateBush();
+	if (!StageHas6Rows() && mRow == 4)
+	{
+		aBush = mBushList[mRow + 1];
+		aBush->AnimateBush();
+	}
 }
 
 void Board::RemoveAllZombies()
@@ -2642,7 +2692,7 @@ void Board::RemoveZombiesForRepick()
 	Zombie* aZombie = nullptr;
 	while (IterateZombies(aZombie))
 	{
-		if (!aZombie->IsDeadOrDying() && aZombie->mMindControlled && aZombie->mPosX > 720)
+		if (!aZombie->IsDeadOrDying() && aZombie->mMindControlled && aZombie->mPosX > (HAS_WIDESCREEN ? BOARD_WIDTH - 80 : 720))
 		{
 			aZombie->DieNoLoot();
 		}
@@ -2664,7 +2714,7 @@ void Board::RemoveCutsceneZombies()
 bool Board::IsIceAt(int theGridX, int theGridY)
 {
 	TOD_ASSERT(theGridY >= 0 && theGridY < MAX_GRID_SIZE_Y);
-	if (mIceTimer[theGridY] == 0 || mIceMinX[theGridY] > 750)
+	if (mIceTimer[theGridY] == 0 || mIceMinX[theGridY] > 750 + BOARD_ADDITIONAL_WIDTH)
 		return false;
 
 	return theGridX >= PixelToGridXKeepOnBoard(mIceMinX[theGridY] + 12, 0);
@@ -3188,7 +3238,7 @@ void Board::UpdateToolTip()
 	{
 		mToolTip->SetLabel(_S("[NEXT_GARDEN_TOOLTIP]"));
 		Rect aButtonRect = GetShovelButtonRect();
-		mToolTip->mX = 599;
+		mToolTip->mX = 599 + BOARD_ADDITIONAL_WIDTH;
 		mToolTip->mY = aButtonRect.mY + 52;
 		mToolTip->mCenter = true;
 		mToolTip->mVisible = true;
@@ -4097,7 +4147,7 @@ bool Board::MouseHitTest(int x, int y, HitResult* theHitResult)
 				Rect aButtonRect = GetShovelButtonRect();
 				if (aTool == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
 				{
-					aButtonRect.mX = 564;
+					aButtonRect.mX = 564 + BOARD_ADDITIONAL_WIDTH;
 				}
 				else
 				{
@@ -4640,7 +4690,7 @@ void Board::SpawnZombiesFromPool()
 		aGrid->mWeight = 0;
 
 		ZombieType aZombieType = PickGraveRisingZombieType(aZombiePoints);
-		Zombie* aZombie = AddZombieInRow(aZombieType, aGrid->mY, mCurrentWave);
+		Zombie* aZombie = AddZombieInRow(aZombieType, aGrid->mY, mCurrentWave, true);
 		if (aZombie == nullptr)
 		{
 			return;
@@ -4757,7 +4807,7 @@ void Board::SpawnZombiesFromGraves()
 		}
 		
 		ZombieType aZombieType = PickGraveRisingZombieType(aZombiePoints);
-		Zombie* aZombie = AddZombie(aZombieType, mCurrentWave);
+		Zombie* aZombie = AddZombie(aZombieType, mCurrentWave, true);
 		if (aZombie == nullptr)
 		{
 			return;
@@ -4859,6 +4909,15 @@ void Board::UpdateGameObjects()
 		aZombie->Update();
 	}
 
+	if (HAS_WIDESCREEN)
+	{
+		Bush* aBush = nullptr;
+		while (IterateBushes(aBush))
+		{
+			aBush->Update();
+		}
+	}
+
 	Projectile* aProjectile = nullptr;
 	while (IterateProjectiles(aProjectile))
 	{
@@ -4955,7 +5014,7 @@ void Board::ZombiesWon(Zombie* theZombie)
 			aZombie->mZombiePhase == ZombiePhase::PHASE_DANCER_RISING)
 		{
 			if ((aZombie->mZombieType == ZombieType::ZOMBIE_GARGANTUAR || aZombie->mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR) && 
-				aZombie->IsDeadOrDying() && aZombie->mPosX < 140)
+				aZombie->IsDeadOrDying() && aZombie->mPosX < 140 + BOARD_ADDITIONAL_WIDTH)
 			{
 				aZombie->DieNoLoot();
 			}
@@ -5005,7 +5064,7 @@ void Board::ZombiesWon(Zombie* theZombie)
 	mApp->PlaySample(Sexy::SOUND_LOSEMUSIC);
 
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_ZOMBIES_WON, true);
-	Reanimation* aReanim = mApp->AddReanimation(-BOARD_OFFSET, 0, MakeRenderOrder(RenderLayer::RENDER_LAYER_SCREEN_FADE, 0, 0), ReanimationType::REANIM_ZOMBIES_WON);
+	Reanimation* aReanim = mApp->AddReanimation(-BOARD_OFFSET_X, 0, MakeRenderOrder(RenderLayer::RENDER_LAYER_SCREEN_FADE, 0, 0), ReanimationType::REANIM_ZOMBIES_WON);
 	aReanim->mLoopType = ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD;
 	aReanim->GetTrackInstanceByName("fullscreen")->mTrackColor = Color::Black;
 	aReanim->SetFramesForLayer("anim_screen");
@@ -5096,7 +5155,7 @@ void Board::UpdateSunSpawning()
 	mNumSunsFallen++;
 	mSunCountDown = min(SUN_COUNTDOWN_MAX, SUN_COUNTDOWN + mNumSunsFallen * 10) + Rand(SUN_COUNTDOWN_RANGE);
 	CoinType aSunType = mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_SUNNY_DAY ? CoinType::COIN_LARGESUN : CoinType::COIN_SUN;
-	AddCoin(RandRangeInt(100, 649), 60, aSunType, CoinMotion::COIN_MOTION_FROM_SKY);
+	AddCoin(RandRangeInt(100 + BOARD_ADDITIONAL_WIDTH, 649 + BOARD_ADDITIONAL_WIDTH), 60, aSunType, CoinMotion::COIN_MOTION_FROM_SKY);
 }
 
 void Board::NextWaveComing()
@@ -5105,7 +5164,7 @@ void Board::NextWaveComing()
 	{
 		if (!IsSurvivalStageWithRepick() && mApp->mGameMode != GameMode::GAMEMODE_CHALLENGE_LAST_STAND && !mApp->IsContinuousChallenge())
 		{
-			mApp->AddReanimation(0, 30, MakeRenderOrder(RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0), ReanimationType::REANIM_FINAL_WAVE);
+			mApp->AddReanimation(BOARD_ADDITIONAL_WIDTH, (HAS_WIDESCREEN ? 0 : 30), MakeRenderOrder(RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0), ReanimationType::REANIM_FINAL_WAVE);
 			mFinalWaveSoundCounter = 60;
 		}
 	}
@@ -5516,7 +5575,7 @@ void Board::UpdateGame()
 	UpdateGameObjects();
 	if (StageHasFog() && mFogBlownCountDown > 0)
 	{
-		float aMaxFogOffset = 1065.0f - LeftFogColumn() * 80.0f;
+		float aMaxFogOffset = 1065.0f - LeftFogColumn() * (HAS_WIDESCREEN ? 70.0f : 80.0f);
 		if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO)
 		{
 			mFogOffset = TodAnimateCurveFloat(200, 0, mFogBlownCountDown, aMaxFogOffset, 0, TodCurves::CURVE_EASE_OUT);
@@ -5703,7 +5762,7 @@ void Board::Update()
 	if (mBackground == BackgroundType::BACKGROUND_3_POOL && mPoolSparklyParticleID == ParticleSystemID::PARTICLESYSTEMID_NULL && mDrawCount > 0)
 	{
 		int aRenderPosition = MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, 2, 0);
-		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY);
+		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450 + BOARD_ADDITIONAL_WIDTH, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY);
 		mPoolSparklyParticleID = mApp->ParticleGetID(aPoolParticle);
 	}
 
@@ -5758,11 +5817,11 @@ void Board::DrawIce(Graphics* g, int theGridY)
 	}
 
 	int aBeginningX = mIceMinX[theGridY] + 13, aDeltaX;
-	for (int aPosX = aBeginningX; aPosX < BOARD_WIDTH; aPosX += aDeltaX)
+	for (int aPosX = aBeginningX; aPosX < (HAS_WIDESCREEN ? BOARD_ICE_START : BOARD_WIDTH); aPosX += aDeltaX)
 	{
 		if (aPosX == aBeginningX)
 		{
-			aDeltaX = (BOARD_WIDTH - aBeginningX) % aWidth;
+			aDeltaX = ((HAS_WIDESCREEN ? BOARD_ICE_START : BOARD_WIDTH) - aBeginningX) % aWidth;
 			if (!aDeltaX) aDeltaX = aWidth;
 		}
 		else aDeltaX = aWidth;
@@ -5794,26 +5853,26 @@ void Board::DrawBackdrop(Graphics* g)
 
 	if (mLevel == 1 && mApp->IsFirstTimeAdventureMode())
 	{
-		g->DrawImage(Sexy::IMAGE_BACKGROUND1UNSODDED, -BOARD_OFFSET, 0);
+		g->DrawImage(Sexy::IMAGE_BACKGROUND1UNSODDED, -BOARD_OFFSET_X, 0);
 		int aWidth = TodAnimateCurve(0, 1000, mSodPosition, 0, Sexy::IMAGE_SOD1ROW->GetWidth(), TodCurves::CURVE_LINEAR);
 		Rect aSrcRect(0, 0, aWidth, Sexy::IMAGE_SOD1ROW->GetHeight());
-		g->DrawImage(Sexy::IMAGE_SOD1ROW, 239 - BOARD_OFFSET, 265, aSrcRect);
+		g->DrawImage(Sexy::IMAGE_SOD1ROW, 239 - BOARD_OFFSET_X + BOARD_ADDITIONAL_WIDTH, 265, aSrcRect);
 	}
 	else if (((mLevel == 2 || mLevel == 3) && mApp->IsFirstTimeAdventureMode()) || mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_RESODDED)
 	{
-		g->DrawImage(Sexy::IMAGE_BACKGROUND1UNSODDED, -BOARD_OFFSET, 0);
-		g->DrawImage(Sexy::IMAGE_SOD1ROW, 239 - BOARD_OFFSET, 265);
+		g->DrawImage(Sexy::IMAGE_BACKGROUND1UNSODDED, -BOARD_OFFSET_X, 0);
+		g->DrawImage(Sexy::IMAGE_SOD1ROW, 239 - BOARD_OFFSET_X + BOARD_ADDITIONAL_WIDTH, 265);
 		int aWidth = TodAnimateCurve(0, 1000, mSodPosition, 0, Sexy::IMAGE_SOD3ROW->GetWidth(), TodCurves::CURVE_LINEAR);
 		Rect aSrcRect(0, 0, aWidth, Sexy::IMAGE_SOD3ROW->GetHeight());
-		g->DrawImage(Sexy::IMAGE_SOD3ROW, 235 - BOARD_OFFSET, 149, aSrcRect);
+		g->DrawImage(Sexy::IMAGE_SOD3ROW, 235 - BOARD_OFFSET_X + BOARD_ADDITIONAL_WIDTH, 149, aSrcRect);
 	}
 	else if (mLevel == 4 && mApp->IsFirstTimeAdventureMode())
 	{
-		g->DrawImage(Sexy::IMAGE_BACKGROUND1UNSODDED, -BOARD_OFFSET, 0);
-		g->DrawImage(Sexy::IMAGE_SOD3ROW, 235 - BOARD_OFFSET, 149);
+		g->DrawImage(Sexy::IMAGE_BACKGROUND1UNSODDED, -BOARD_OFFSET_X, 0);
+		g->DrawImage(Sexy::IMAGE_SOD3ROW, 235 - BOARD_OFFSET_X + BOARD_ADDITIONAL_WIDTH, 149);
 		int aWidth = TodAnimateCurve(0, 1000, mSodPosition, 0, 773, TodCurves::CURVE_LINEAR);
-		Rect aSrcRect(232, 0, aWidth, Sexy::IMAGE_BACKGROUND1->GetHeight());
-		g->DrawImage(Sexy::IMAGE_BACKGROUND1, 232 - BOARD_OFFSET, 0, aSrcRect);
+		Rect aSrcRect(232, 0, aWidth + BOARD_ADDITIONAL_WIDTH, Sexy::IMAGE_BACKGROUND1->GetHeight());
+		g->DrawImage(Sexy::IMAGE_BACKGROUND1, 232 - BOARD_OFFSET_X, 0, aSrcRect);
 	}
 	else if (aBgImage)
 	{
@@ -5823,7 +5882,7 @@ void Board::DrawBackdrop(Graphics* g)
 		}
 		else
 		{
-			g->DrawImage(aBgImage, -BOARD_OFFSET, 0);
+			g->DrawImage(aBgImage, -BOARD_OFFSET_X, 0);
 		}
 	}
 
@@ -5833,20 +5892,22 @@ void Board::DrawBackdrop(Graphics* g)
 	}
 	if (StageHasPool())
 	{
+		g->mTransX += BOARD_ADDITIONAL_WIDTH;
 		mApp->mPoolEffect->PoolEffectDraw(g, StageIsNight());
+		g->mTransX -= BOARD_ADDITIONAL_WIDTH;
 	}
 	if (mTutorialState == TutorialState::TUTORIAL_LEVEL_1_PLANT_PEASHOOTER)
 	{
 		Graphics aClipG(*g);
 		aClipG.SetColorizeImages(true);
 		aClipG.SetColor(GetFlashingColor(mMainCounter, 75));
-		aClipG.DrawImage(Sexy::IMAGE_SOD1ROW, 239 - BOARD_OFFSET, 265);
+		aClipG.DrawImage(Sexy::IMAGE_SOD1ROW, 239 - BOARD_OFFSET_X + BOARD_ADDITIONAL_WIDTH, 265);
 		aClipG.SetColorizeImages(false);
 	}
 	mChallenge->DrawBackdrop(g);
 	if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && StageHasGraveStones())
 	{
-		g->DrawImage(Sexy::IMAGE_NIGHT_GRAVE_GRAPHIC, 1092, 40);
+		g->DrawImage(Sexy::IMAGE_NIGHT_GRAVE_GRAPHIC, 1092 + BOARD_ADDITIONAL_WIDTH, (HAS_WIDESCREEN ? 30 : 40));
 	}
 }
 
@@ -5985,6 +6046,17 @@ static inline void AddGameObjectRenderItemCoin(RenderItem* theRenderList, int& t
 	theCurRenderItem++;
 }
 
+static inline void AddGameObjectRenderItemBush(RenderItem* theRenderList, int& theCurRenderItem, RenderObjectType theRenderObjectType, GameObject* theGameObject)
+{
+	TOD_ASSERT(theCurRenderItem < MAX_RENDER_ITEMS);
+	RenderItem& aRenderItem = theRenderList[theCurRenderItem];
+	aRenderItem.mRenderObjectType = theRenderObjectType;
+	aRenderItem.mZPos = theGameObject->mRenderOrder;
+	aRenderItem.mGameObject = theGameObject;
+	aRenderItem.mCoin = (Coin*)theGameObject;
+	theCurRenderItem++;
+}
+
 static inline void AddUIRenderItem(RenderItem* theRenderList, int& theCurRenderItem, RenderObjectType theRenderObjectType, int thePosZ)
 {
 	TOD_ASSERT(theCurRenderItem < MAX_RENDER_ITEMS);
@@ -6028,8 +6100,8 @@ void Board::DrawGameObjects(Graphics* g)
 					aRenderItemCount++;
 				}
 
-				bool plantCheck = (aPlant->mSeedType == SeedType::SEED_INSTANT_COFFEE || aPlant->mImitaterType == SeedType::SEED_INSTANT_COFFEE) || (aPlant->mSeedType == SeedType::SEED_FLOWERPOT || aPlant->mImitaterType == SeedType::SEED_FLOWERPOT) || (aPlant->mSeedType == SeedType::SEED_LILYPAD || aPlant->mImitaterType == SeedType::SEED_LILYPAD);
-				if (mApp->mPlantHealthbars && mApp->mGameMode != GAMEMODE_CHALLENGE_ZEN_GARDEN && !plantCheck)
+				bool aplantCheck = (aPlant->mSeedType == SeedType::SEED_INSTANT_COFFEE || aPlant->mImitaterType == SeedType::SEED_INSTANT_COFFEE) || (aPlant->mSeedType == SeedType::SEED_FLOWERPOT || aPlant->mImitaterType == SeedType::SEED_FLOWERPOT) || (aPlant->mSeedType == SeedType::SEED_LILYPAD || aPlant->mImitaterType == SeedType::SEED_LILYPAD);
+				if (mApp->mPlantHealthbars && mApp->mGameMode != GAMEMODE_CHALLENGE_ZEN_GARDEN && !aplantCheck)
 				{
 					RenderItem& aRenderItem = aRenderList[aRenderItemCount];
 					aRenderItem.mRenderObjectType = RenderObjectType::RENDER_ITEM_HEALTHBAR_PLANT;
@@ -6045,6 +6117,14 @@ void Board::DrawGameObjects(Graphics* g)
 		while (IterateCoins(aCoin))
 		{
 			AddGameObjectRenderItemCoin(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_COIN, aCoin);
+		}
+		if (HAS_WIDESCREEN)
+		{
+			Bush* aBush = nullptr;
+			while (IterateBushes(aBush))
+			{
+				AddGameObjectRenderItemBush(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_BUSH, aBush);
+			}
 		}
 	}
 	{
@@ -6187,6 +6267,8 @@ void Board::DrawGameObjects(Graphics* g)
 
 		AddUIRenderItem(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_BACKDROP, MakeRenderOrder(RenderLayer::RENDER_LAYER_UI_BOTTOM, 0, 0));
 		AddUIRenderItem(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_BOTTOM_UI, aZPos);
+		if (HAS_WIDESCREEN)
+			AddUIRenderItem(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_COVER, MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0));
 		AddUIRenderItem(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_COIN_BANK, MakeRenderOrder(RenderLayer::RENDER_LAYER_COIN_BANK, 0, 0));
 		AddUIRenderItem(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_TOP_UI, MakeRenderOrder(RenderLayer::RENDER_LAYER_UI_TOP, 0, 0));
 		AddUIRenderItem(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_SCREEN_FADE, MakeRenderOrder(RenderLayer::RENDER_LAYER_SCREEN_FADE, 0, 0));
@@ -6398,6 +6480,21 @@ void Board::DrawGameObjects(Graphics* g)
 		case RenderObjectType::RENDER_ITEM_TOP_UI:
 			DrawUITop(g);
 			break;
+
+		case RenderObjectType::RENDER_ITEM_BUSH:
+		{
+			Bush* aBush = aRenderItem.mBush;
+			if (aBush->BeginDraw(g))
+			{
+				aBush->Draw(g);
+				aBush->EndDraw(g);
+			}
+			break;
+		}
+
+		case RenderObjectType::RENDER_ITEM_COVER:
+			DrawCover(g);
+			break;
 			
 		case RenderObjectType::RENDER_ITEM_FOG:
 			DrawFog(g);
@@ -6549,48 +6646,50 @@ void Board::DrawProgressMeter(Graphics* g)
 	if (!HasProgressMeter())
 		return;
 
-	g->DrawImageCel(Sexy::IMAGE_FLAGMETER, 600, 575, 0);
+	int aImagePosX = BOARD_WIDTH - 200;
+	int aImagePosY = BOARD_HEIGHT - 25;
+	g->DrawImageCel(Sexy::IMAGE_FLAGMETER, (HAS_WIDESCREEN ? aImagePosX : 600), (HAS_WIDESCREEN ? aImagePosY : 575), 0);
 	int aCelWidth = Sexy::IMAGE_FLAGMETER->GetCelWidth();
 	int aCelHeight = Sexy::IMAGE_FLAGMETER->GetCelHeight();
 	int aClipWidth = TodAnimateCurve(0, PROGRESS_METER_COUNTER, mProgressMeterWidth, 0, 143, TodCurves::CURVE_LINEAR);
 	Rect aSrcRect(aCelWidth - aClipWidth - 7, aCelHeight, aClipWidth, aCelHeight);
-	Rect aDstRect(aCelWidth - aClipWidth + 593, 575, aClipWidth, aCelHeight);
+	Rect aDstRect(aCelWidth - aClipWidth + (HAS_WIDESCREEN ? aImagePosX - 7 : 593), (HAS_WIDESCREEN ? aImagePosY : 575), aClipWidth, aCelHeight);
 	g->DrawImage(Sexy::IMAGE_FLAGMETER, aDstRect, aSrcRect);
 	
-	int aPosX = aCelWidth / 2 + 600;
+	int aPosX = aCelWidth / 2 + (HAS_WIDESCREEN ? aImagePosX : 600);
 	Color aColor(224, 187, 98);
 	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED || mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED_TWIST)
 	{
 		SexyString aMatchStr = StrFormat(_S("%d / %d %s"), mChallenge->mChallengeScore, 75, TodStringTranslate(_S("[MATCHES]")).c_str());
-		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
+		TodDrawString(g, aMatchStr, aPosX, (HAS_WIDESCREEN ? aImagePosY + 14 : 589), Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->IsSquirrelLevel())
 	{
 		SexyString aMatchStr = StrFormat(_S("%d / %d %s"), mChallenge->mChallengeScore, 7, TodStringTranslate(_S("[SQUIRRELS]")).c_str());
-		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
+		TodDrawString(g, aMatchStr, aPosX, (HAS_WIDESCREEN ? aImagePosY + 14 : 589), Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_SLOT_MACHINE)
 	{
 		int aSunMoney = ClampInt(mSunMoney, 0, 2000);
 		SexyString aMatchStr = StrFormat(_S("%d / %d %s"), aSunMoney, 2000, TodStringTranslate(_S("[SUN]")).c_str());
-		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
+		TodDrawString(g, aMatchStr, aPosX, (HAS_WIDESCREEN ? aImagePosY + 14 : 589), Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZOMBIQUARIUM)
 	{
 		int aSunMoney = ClampInt(mSunMoney, 0, 1000);
 		SexyString aMatchStr = StrFormat(_S("%d / %d %s"), aSunMoney, 1000, TodStringTranslate(_S("[SUN]")).c_str());
-		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
+		TodDrawString(g, aMatchStr, aPosX, (HAS_WIDESCREEN ? aImagePosY + 14 : 589), Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->IsIZombieLevel())
 	{
 		SexyString aMatchStr = StrFormat(_S("%d / %d %s"), mChallenge->mChallengeScore, 5, TodStringTranslate(_S("[BRAINS]")).c_str());
-		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
+		TodDrawString(g, aMatchStr, aPosX, (HAS_WIDESCREEN ? aImagePosY + 14 : 589), Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (ProgressMeterHasFlags())
 	{
 		int aNumWavesPerFlag = GetNumWavesPerFlag();
 		int aNumFlagWaves = mNumWaves / aNumWavesPerFlag;
-		int aFlagsPosEnd = 590 + aCelWidth;  
+		int aFlagsPosEnd = (HAS_WIDESCREEN ? aImagePosX : 590) + aCelWidth - (HAS_WIDESCREEN ? 10 : 0);
 		for (int aFlagWave = 1; aFlagWave <= aNumFlagWaves; aFlagWave++)
 		{
 			int aHeight = 0;
@@ -6603,13 +6702,13 @@ void Board::DrawProgressMeter(Graphics* g)
 			{
 				aHeight = TodAnimateCurve(100, 0, mFlagRaiseCounter, 0, 14, TodCurves::CURVE_LINEAR);
 			}
-			int aPosX = TodAnimateCurve(0, mNumWaves, aTotalWavesAtFlag, aFlagsPosEnd, 606, TodCurves::CURVE_LINEAR);
-			g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aPosX, 571, 1, 0);
-			g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aPosX, 572 - aHeight, 2, 0);
+			int aPosX = TodAnimateCurve(0, mNumWaves, aTotalWavesAtFlag, aFlagsPosEnd, (HAS_WIDESCREEN ? aImagePosX + 6 : 606), TodCurves::CURVE_LINEAR);
+			g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aPosX, (HAS_WIDESCREEN ? aImagePosY - 4 : 571), 1, 0);
+			g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aPosX, (HAS_WIDESCREEN ? aImagePosY : 572) - aHeight - (HAS_WIDESCREEN ? 3 : 0), 2, 0);
 		}
 	}
 
-	g->DrawImage(Sexy::IMAGE_FLAGMETERLEVELPROGRESS, 638, 589);
+	g->DrawImage(Sexy::IMAGE_FLAGMETERLEVELPROGRESS, (HAS_WIDESCREEN ? aImagePosY + aImagePosX + 38 : 638), (HAS_WIDESCREEN ? aImagePosY + 14 : 589));
 	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED || 
 		mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED_TWIST ||
 		mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZOMBIQUARIUM || 
@@ -6619,18 +6718,18 @@ void Board::DrawProgressMeter(Graphics* g)
 		mApp->IsFinalBossLevel())
 		return;
 	int aHeadProgress = TodAnimateCurve(0, 150, mProgressMeterWidth, 0, 135, CURVE_LINEAR);
-	g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aCelWidth - aHeadProgress + 580, 572, 0, 0);
+	g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aCelWidth - aHeadProgress + (HAS_WIDESCREEN ? aImagePosX - 20 : 580), (HAS_WIDESCREEN ? aImagePosY - 3 : 572), 0, 0);
 }
 
 void Board::DrawHouseDoorBottom(Graphics* g)
 {
 	switch (mBackground)
 	{
-	case BackgroundType::BACKGROUND_1_DAY:		g->DrawImage(Sexy::IMAGE_BACKGROUND1_GAMEOVER_INTERIOR_OVERLAY, -126, 225);		break;
-	case BackgroundType::BACKGROUND_2_NIGHT:	g->DrawImage(Sexy::IMAGE_BACKGROUND2_GAMEOVER_INTERIOR_OVERLAY, -125, 196);		break;
-	case BackgroundType::BACKGROUND_3_POOL:		g->DrawImage(Sexy::IMAGE_BACKGROUND3_GAMEOVER_INTERIOR_OVERLAY, -171, 241);		break;
-	case BackgroundType::BACKGROUND_4_FOG:		g->DrawImage(Sexy::IMAGE_BACKGROUND4_GAMEOVER_INTERIOR_OVERLAY, -172, 246);		break;
-	default:																													break;
+	case BackgroundType::BACKGROUND_1_DAY:		g->DrawImage(Sexy::IMAGE_BACKGROUND1_GAMEOVER_INTERIOR_OVERLAY, -126 + BOARD_ADDITIONAL_WIDTH, 225);		break;
+	case BackgroundType::BACKGROUND_2_NIGHT:	g->DrawImage(Sexy::IMAGE_BACKGROUND2_GAMEOVER_INTERIOR_OVERLAY, -125 + BOARD_ADDITIONAL_WIDTH, 196);		break;
+	case BackgroundType::BACKGROUND_3_POOL:		g->DrawImage(Sexy::IMAGE_BACKGROUND3_GAMEOVER_INTERIOR_OVERLAY, -171 + BOARD_ADDITIONAL_WIDTH, 241);		break;
+	case BackgroundType::BACKGROUND_4_FOG:		g->DrawImage(Sexy::IMAGE_BACKGROUND4_GAMEOVER_INTERIOR_OVERLAY, -172 + BOARD_ADDITIONAL_WIDTH, 246);		break;
+	default:																																				break;
 	}
 }
 
@@ -6638,13 +6737,13 @@ void Board::DrawHouseDoorTop(Graphics* g)
 {
 	switch (mBackground)
 	{
-	case BackgroundType::BACKGROUND_1_DAY:		g->DrawImage(Sexy::IMAGE_BACKGROUND1_GAMEOVER_MASK, -130, 202);		break;
-	case BackgroundType::BACKGROUND_2_NIGHT:	g->DrawImage(Sexy::IMAGE_BACKGROUND2_GAMEOVER_MASK, -128, 207);		break;
-	case BackgroundType::BACKGROUND_3_POOL:		g->DrawImage(Sexy::IMAGE_BACKGROUND3_GAMEOVER_MASK, -172, 234);		break;
-	case BackgroundType::BACKGROUND_4_FOG:		g->DrawImage(Sexy::IMAGE_BACKGROUND4_GAMEOVER_MASK, -173, 133);		break;
-	case BackgroundType::BACKGROUND_5_ROOF:		g->DrawImage(Sexy::IMAGE_BACKGROUND5_GAMEOVER_MASK, -220, 81);		break;
-	case BackgroundType::BACKGROUND_6_BOSS:		g->DrawImage(Sexy::IMAGE_BACKGROUND6_GAMEOVER_MASK, -220, 81);		break;
-	default:																										break;
+	case BackgroundType::BACKGROUND_1_DAY:		g->DrawImage(Sexy::IMAGE_BACKGROUND1_GAMEOVER_MASK, -130 + BOARD_ADDITIONAL_WIDTH, 202);		break;
+	case BackgroundType::BACKGROUND_2_NIGHT:	g->DrawImage(Sexy::IMAGE_BACKGROUND2_GAMEOVER_MASK, -128 + BOARD_ADDITIONAL_WIDTH, 207);		break;
+	case BackgroundType::BACKGROUND_3_POOL:		g->DrawImage(Sexy::IMAGE_BACKGROUND3_GAMEOVER_MASK, -172 + BOARD_ADDITIONAL_WIDTH, 234);		break;
+	case BackgroundType::BACKGROUND_4_FOG:		g->DrawImage(Sexy::IMAGE_BACKGROUND4_GAMEOVER_MASK, -173 + BOARD_ADDITIONAL_WIDTH, 133);		break;
+	case BackgroundType::BACKGROUND_5_ROOF:		g->DrawImage(Sexy::IMAGE_BACKGROUND5_GAMEOVER_MASK, -220 + BOARD_ADDITIONAL_WIDTH, 81);			break;
+	case BackgroundType::BACKGROUND_6_BOSS:		g->DrawImage(Sexy::IMAGE_BACKGROUND6_GAMEOVER_MASK, -220 + BOARD_ADDITIONAL_WIDTH, 81);			break;
+	default:																																	break;
 	}
 }
 
@@ -6683,11 +6782,11 @@ void Board::DrawLevel(Graphics* g)
 		}
 	}
 
-	int aPosX = 780;
-	int aPosY = 595;
+	int aPosX = (HAS_WIDESCREEN ? BOARD_WIDTH - 20 : 720);
+	int aPosY = (HAS_WIDESCREEN ? BOARD_HEIGHT - 5 : 595);
 	if (HasProgressMeter())
 	{
-		aPosX = 593;
+		aPosX = (HAS_WIDESCREEN ? BOARD_WIDTH - 207 : 593);
 	}
 	if (mChallenge->mChallengeState == ChallengeState::STATECHALLENGE_ZEN_FADING)
 	{
@@ -6747,7 +6846,7 @@ void Board::DrawZenButtons(Graphics* g)
 		Rect aButtonRect = GetShovelButtonRect();
 		if (aTool == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
 		{
-			aButtonRect.mX = 564;
+			aButtonRect.mX = 564 + BOARD_ADDITIONAL_WIDTH;
 			if (!mMenuButton->mBtnNoDraw)
 			{
 				g->DrawImage(Sexy::IMAGE_ZEN_NEXTGARDEN, aButtonRect.mX + 2, aButtonRect.mY + aOffsetY);
@@ -7040,6 +7139,7 @@ void Board::DrawDebugText(Graphics* g)
 		aText += StrFormat(_S("coins %d\n"), mCoins.mSize);
 		aText += StrFormat(_S("lawn mowers %d\n"), mLawnMowers.mSize);
 		aText += StrFormat(_S("grid items %d\n"), mGridItems.mSize);
+		if (HAS_WIDESCREEN) aText += StrFormat(_S("bushes %d\n"), mBushes.mSize);
 		break;
 
 	case DebugTextMode::DEBUG_TEXT_COLLISION:
@@ -7142,19 +7242,47 @@ void Board::DrawFadeOut(Graphics* g)
 	g->FillRect(0, 0, mWidth, mHeight);
 }
 
+void Board::DrawCover(Graphics* g)
+{
+	switch (mBackground)
+	{
+	case BACKGROUND_1_DAY:
+		g->DrawImage(Sexy::IMAGE_BACKGROUND1_COVER, 685 + BOARD_ADDITIONAL_WIDTH, 557);
+		break;
+	case BACKGROUND_2_NIGHT:
+		g->DrawImage(Sexy::IMAGE_BACKGROUND2_COVER, 685 + BOARD_ADDITIONAL_WIDTH, 557);
+		break;
+	case BACKGROUND_3_POOL:
+		g->DrawImage(Sexy::IMAGE_BACKGROUND3_COVER, 671 + BOARD_ADDITIONAL_WIDTH, 613);
+		break;
+	case BACKGROUND_4_FOG:
+		g->DrawImage(Sexy::IMAGE_BACKGROUND4_COVER, 671 + BOARD_ADDITIONAL_WIDTH, 613);
+		break;
+	case BACKGROUND_5_ROOF:
+		g->DrawImage(Sexy::IMAGE_BACKGROUND5_TREES, mRoofTreeOffset, 0);
+		g->DrawImage(Sexy::IMAGE_BACKGROUND5_POLE, mRoofPoleOffset, 0);
+		break;
+	case BACKGROUND_6_BOSS:
+		g->DrawImage(Sexy::IMAGE_BACKGROUND6_TREES, mRoofTreeOffset, 0);
+		g->DrawImage(Sexy::IMAGE_BACKGROUND6_POLE, mRoofPoleOffset, 0);
+		break;
+	}
+}
+
 void Board::DrawTopRightUI(Graphics* g)
 {
 	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN)
 	{
+		int aButtonOffsetX = BOARD_ADDITIONAL_WIDTH * 2;
 		if (mChallenge->mChallengeState == STATECHALLENGE_ZEN_FADING)
 		{
 			mMenuButton->mY = TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, -10, -50, TodCurves::CURVE_EASE_IN_OUT);
-			mStoreButton->mX = TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, 678, 800, TodCurves::CURVE_EASE_IN_OUT);
+			mStoreButton->mX = TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, 678 + aButtonOffsetX, BOARD_WIDTH, TodCurves::CURVE_EASE_IN_OUT);
 		}
 		else
 		{
 			mMenuButton->mY = -10;
-			mStoreButton->mX = 678;
+			mStoreButton->mX = 678 + aButtonOffsetX;
 		}
 	}
 
@@ -7237,6 +7365,13 @@ void Board::DrawUIBottom(Graphics* g)
 
 void Board::DrawUICoinBank(Graphics* g)
 {
+	mCoinBankX = 57;
+	mCoinBankY = BOARD_HEIGHT - Sexy::IMAGE_COINBANK->GetHeight() - 1;
+	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || mApp->mCrazyDaveState != CrazyDaveState::CRAZY_DAVE_OFF)
+	{
+		mCoinBankX = BOARD_WIDTH - 350 - mX;
+	}
+
 	if (mApp->mGameScene != GameScenes::SCENE_PLAYING && mApp->mCrazyDaveState == CrazyDaveState::CRAZY_DAVE_OFF)
 		return;
 
@@ -7253,12 +7388,12 @@ void Board::DrawUICoinBank(Graphics* g)
 	g->SetColorizeImages(true);
 	int anAlpha = ClampInt(255 * mCoinBankFadeCount / 15, 0, 255);
 	g->SetColor(Color(255, 255, 255, anAlpha));
-	g->DrawImage(Sexy::IMAGE_COINBANK, aPosX, aPosY);
+	g->DrawImage(Sexy::IMAGE_COINBANK, (HAS_WIDESCREEN ? mCoinBankX : aPosX), (HAS_WIDESCREEN ? mCoinBankY : aPosY));
 
 	g->SetColor(Color(180, 255, 90, anAlpha));
 	g->SetFont(Sexy::FONT_CONTINUUMBOLD14);
 	SexyString aCoinLabel = mApp->GetMoneyString(mApp->mPlayerInfo->mCoins);
-	g->DrawString(aCoinLabel, aPosX + 116 - Sexy::FONT_CONTINUUMBOLD14->StringWidth(aCoinLabel), aPosY + 24);
+	g->DrawString(aCoinLabel, (HAS_WIDESCREEN ? mCoinBankX : aPosX) + 116 - Sexy::FONT_CONTINUUMBOLD14->StringWidth(aCoinLabel), (HAS_WIDESCREEN ? mCoinBankY : aPosY) + 24);
 	g->SetColorizeImages(false);
 }
 
@@ -7371,7 +7506,7 @@ void Board::DrawFog(Graphics* g)
 			int aCelLook = mGridCelLook[x][y % MAX_GRID_SIZE_Y];
 			int aCelCol = aCelLook % 8;
 			int aPosXOffset = 80;
-			float aPosX = x * aPosXOffset + mFogOffset - 15;
+			float aPosX = x * aPosXOffset + mFogOffset - 15 + BOARD_ADDITIONAL_WIDTH;
 			float aPosY = y * 85 + 20;
 			float aTime = mMainCounter * PI * 2;
 			float aPhaseX = 6 * PI * x / MAX_GRID_SIZE_X;
@@ -7395,7 +7530,36 @@ void Board::DrawFog(Graphics* g)
 
 			if (x == MAX_GRID_SIZE_X - 1)
 			{
-				g->DrawImageCel(aImageFog, aPosX + aPosXOffset, aPosY, aCelCol, 0);
+				if (HAS_WIDESCREEN)
+				{
+					for (int i = 1; i <= MAX_GRID_SIZE_X - LeftFogColumn() + 1; i++)
+					{
+						if (mApp->mIs3dAccel)
+						{
+							aCelLook += i;
+							aCelCol = aCelLook % 8;
+							aPhaseX = 6 * PI * (x + i) / MAX_GRID_SIZE_X;
+							aPhaseY = 6 * PI * (y + i) / (MAX_GRID_SIZE_Y + 1);
+							aMotion = 13 + 4 * sin(aTime / 900 + aPhaseY) + 8 * sin(aTime / 500 + aPhaseX);
+							aColorVariant = 255 - aCelLook * 1.5 - aMotion * 1.5;
+							aLightnessVariant = 255 - aCelLook - aMotion;
+							g->SetColor(Color(aColorVariant, aColorVariant, aLightnessVariant, aFadeAmount));
+						}
+						g->DrawImageCel(aImageFog, aPosX + aPosXOffset * i, aPosY, aCelCol, 0);
+						if (y == 0)
+						{
+							for (int j = 1; j <= 2; j++)
+								g->DrawImageCel(aImageFog, aPosX + aPosXOffset * i, aPosY + 85 * -j, aCelCol, 0);
+						}
+					}
+				}
+				else
+					g->DrawImageCel(aImageFog, aPosX + aPosXOffset, aPosY, aCelCol, 0);
+			}
+			if (y == 0 && HAS_WIDESCREEN)
+			{
+				for (int i = 1; i <= 2; i++)
+					g->DrawImageCel(aImageFog, aPosX, aPosY + 85 * -i, aCelCol, 0);
 			}
 			g->SetColorizeImages(false);
 		}
@@ -8468,14 +8632,14 @@ void Board::KeyChar(SexyChar theChar)
 		if (!CanAddBobSled())
 		{
 			int aRow = Rand(5);
-			int aPos = 400;
+			int aPos = 400 + BOARD_ADDITIONAL_WIDTH;
 			if (StageHasPool())
 			{
 				aRow = Rand(2);
 			}
 			else if (StageHasRoof())
 			{
-				aPos = 500;
+				aPos = 500 + BOARD_ADDITIONAL_WIDTH;
 			}
 			mIceTimer[aRow] = 3000;
 			mIceMinX[aRow] = aPos;
@@ -8659,6 +8823,17 @@ void Board::ProcessDeleteQueue()
 			}
 		}
 	}
+	if (HAS_WIDESCREEN)
+	{
+		Bush* aBush = nullptr;
+		while (mBushes.IterateNext(aBush))
+		{
+			if (aBush == nullptr)
+			{
+				mBushes.DataArrayFree(aBush);
+			}
+		}
+	}
 }
 
 bool Board::HasConveyorBeltSeedBank()
@@ -8776,6 +8951,15 @@ bool Board::StageHasPool()
 bool Board::StageHas6Rows()
 {
 	return StageHasPool();
+}
+
+bool Board::StageHasBushes()
+{
+	if (!HAS_WIDESCREEN)
+		return false;
+
+	return (mBackground == BackgroundType::BACKGROUND_1_DAY || mBackground == BackgroundType::BACKGROUND_2_NIGHT
+		|| mBackground == BackgroundType::BACKGROUND_3_POOL || mBackground == BackgroundType::BACKGROUND_4_FOG);
 }
 
 bool Board::StageHasZombieWalkInFromRight()
@@ -8898,10 +9082,10 @@ int Board::PixelToGridX(int theX, int theY)
 		}
 	}
 
-	if (theX < LAWN_XMIN)
+	if (theX < LAWN_XMIN + BOARD_ADDITIONAL_WIDTH || (HAS_WIDESCREEN && (theX > BOARD_WIDTH - BOARD_ADDITIONAL_WIDTH - LAWN_XMIN)))
 		return -1;
 
-	return ClampInt((theX - LAWN_XMIN) / 80, 0, MAX_GRID_SIZE_X - 1);
+	return ClampInt((theX - LAWN_XMIN - BOARD_ADDITIONAL_WIDTH) / 80, 0, MAX_GRID_SIZE_X - 1);
 }
 
 int Board::PixelToGridXKeepOnBoard(int theX, int theY)
@@ -8923,7 +9107,7 @@ int Board::PixelToGridY(int theX, int theY)
 	}
 
 	int aGridX = PixelToGridX(theX, theY);
-	if (aGridX == -1 || theY < LAWN_YMIN)
+	if (aGridX == -1 || theY < LAWN_YMIN || (HAS_WIDESCREEN && (theY > BOARD_HEIGHT - 10)))
 		return -1;
 
 	if (StageHasRoof())
@@ -8964,7 +9148,7 @@ int Board::GridToPixelX(int theGridX, int theGridY)
 		}
 	}
 
-	return theGridX * 80 + LAWN_XMIN;
+	return theGridX * 80 + LAWN_XMIN + BOARD_ADDITIONAL_WIDTH;
 }
 
 float Board::GetPosYBasedOnRow(float thePosX, int theRow)
@@ -8972,9 +9156,9 @@ float Board::GetPosYBasedOnRow(float thePosX, int theRow)
 	if (StageHasRoof())
 	{
 		float aSlopeOffset = 0.0f;
-		if (thePosX < 440.0f)
+		if (thePosX < 440.0f + BOARD_ADDITIONAL_WIDTH)
 		{
-			aSlopeOffset = (440.0f - thePosX) * 0.25f;
+			aSlopeOffset = (440.0f - thePosX) * 0.25f + (HAS_WIDESCREEN ? 30 : 0);
 		}
 
 		return GridToPixelY(8, theRow) + aSlopeOffset;
@@ -9195,6 +9379,20 @@ bool Board::IterateGridItems(GridItem*& theGridItem)
 	}
 
 	theGridItem = (GridItem*)-1;
+	return false;
+}
+
+bool Board::IterateBushes(Bush*& theBush)
+{
+	while (mBushes.IterateNext(theBush))
+	{
+		if (theBush != nullptr)
+		{
+			return true;
+		}
+	}
+
+	theBush = (Bush*)-1;
 	return false;
 }
 
@@ -9481,7 +9679,7 @@ void Board::DoFwoosh(int theRow)
 			aOriReanim->ReanimationDie();
 		}
 
-		float aPosX = 750.0f * i / 11.0f + 10.0f;
+		float aPosX = 750.0f * i / 11.0f + 10.0f + BOARD_ADDITIONAL_WIDTH;
 		float aPosY = GetPosYBasedOnRow(aPosX + 10.0f, theRow) - 10.0f;
 		Reanimation* aFwoosh = mApp->AddReanimation(aPosX, aPosY, aRenderOrder, ReanimationType::REANIM_JALAPENO_FIRE);
 		aFwoosh->SetFramesForLayer("anim_flame");

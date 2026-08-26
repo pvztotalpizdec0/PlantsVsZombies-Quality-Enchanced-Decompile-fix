@@ -25,6 +25,7 @@ struct SaveFileHeader
     unsigned int    mMagicNumber;
     unsigned int    mBuildVersion;
     unsigned int    mBuildDate;
+    bool            mIsWidescreen;
 };
 
 class SaveGameContext

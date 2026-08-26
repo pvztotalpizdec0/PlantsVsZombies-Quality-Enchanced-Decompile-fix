@@ -19,62 +19,62 @@
 #include "../SexyAppFramework/Graphics.h"
 #include "../Sexy.TodLib/TodStringFile.h"
 
-static SpecialGridPlacement gGreenhouseGridPlacement[] =  
+static SpecialGridPlacement gGreenhouseGridPlacement[] =
 {
-    {  73,  73, 0, 0 },
-    { 155,  71, 1, 0 },
-    { 239,  68, 2, 0 },
-    { 321,  73, 3, 0 },
-    { 406,  71, 4, 0 },
-    { 484,  67, 5, 0 },
-    { 566,  70, 6, 0 },
-    { 648,  72, 7, 0 },
-    {  67, 168, 0, 1 },
-    { 150, 165, 1, 1 },
-    { 232, 170, 2, 1 },
-    { 314, 175, 3, 1 },
-    { 416, 173, 4, 1 },
-    { 497, 170, 5, 1 },
-    { 578, 164, 6, 1 },
-    { 660, 168, 7, 1 },
-    {  41, 268, 0, 2 },
-    { 130, 266, 1, 2 },
-    { 219, 260, 2, 2 },
-    { 310, 266, 3, 2 },
-    { 416, 267, 4, 2 },
-    { 504, 261, 5, 2 },
-    { 594, 265, 6, 2 },
-    { 684, 269, 7, 2 },
-    {  37, 371, 0, 3 },
-    { 124, 369, 1, 3 },
-    { 211, 368, 2, 3 },
-    { 302, 369, 3, 3 },
-    { 425, 375, 4, 3 },
-    { 512, 368, 5, 3 },
-    { 602, 365, 6, 3 },
-    { 691, 368, 7, 3 }
+    { HAS_WIDESCREEN ? 208 : 73,  HAS_WIDESCREEN ? 78 : 73,  0, 0 },
+    { HAS_WIDESCREEN ? 290 : 155, HAS_WIDESCREEN ? 76 : 71,  1, 0 },
+    { HAS_WIDESCREEN ? 374 : 239, HAS_WIDESCREEN ? 73 : 68,  2, 0 },
+    { HAS_WIDESCREEN ? 456 : 321, HAS_WIDESCREEN ? 78 : 73,  3, 0 },
+    { HAS_WIDESCREEN ? 541 : 406, HAS_WIDESCREEN ? 76 : 71,  4, 0 },
+    { HAS_WIDESCREEN ? 619 : 484, HAS_WIDESCREEN ? 72 : 67,  5, 0 },
+    { HAS_WIDESCREEN ? 701 : 566, HAS_WIDESCREEN ? 75 : 70,  6, 0 },
+    { HAS_WIDESCREEN ? 783 : 648, HAS_WIDESCREEN ? 77 : 72,  7, 0 },
+    { HAS_WIDESCREEN ? 202 : 67,  HAS_WIDESCREEN ? 173 : 168, 0, 1 },
+    { HAS_WIDESCREEN ? 285 : 150, HAS_WIDESCREEN ? 170 : 165, 1, 1 },
+    { HAS_WIDESCREEN ? 367 : 232, HAS_WIDESCREEN ? 175 : 170, 2, 1 },
+    { HAS_WIDESCREEN ? 449 : 314, HAS_WIDESCREEN ? 180 : 175, 3, 1 },
+    { HAS_WIDESCREEN ? 551 : 416, HAS_WIDESCREEN ? 178 : 173, 4, 1 },
+    { HAS_WIDESCREEN ? 632 : 497, HAS_WIDESCREEN ? 175 : 170, 5, 1 },
+    { HAS_WIDESCREEN ? 713 : 578, HAS_WIDESCREEN ? 169 : 164, 6, 1 },
+    { HAS_WIDESCREEN ? 795 : 660, HAS_WIDESCREEN ? 173 : 168, 7, 1 },
+    { HAS_WIDESCREEN ? 176 : 41,  HAS_WIDESCREEN ? 273 : 268, 0, 2 },
+    { HAS_WIDESCREEN ? 265 : 130, HAS_WIDESCREEN ? 271 : 266, 1, 2 },
+    { HAS_WIDESCREEN ? 354 : 219, HAS_WIDESCREEN ? 265 : 260, 2, 2 },
+    { HAS_WIDESCREEN ? 445 : 310, HAS_WIDESCREEN ? 271 : 266, 3, 2 },
+    { HAS_WIDESCREEN ? 551 : 416, HAS_WIDESCREEN ? 272 : 267, 4, 2 },
+    { HAS_WIDESCREEN ? 639 : 504, HAS_WIDESCREEN ? 266 : 261, 5, 2 },
+    { HAS_WIDESCREEN ? 729 : 594, HAS_WIDESCREEN ? 270 : 265, 6, 2 },
+    { HAS_WIDESCREEN ? 819 : 684, HAS_WIDESCREEN ? 274 : 269, 7, 2 },
+    { HAS_WIDESCREEN ? 172 : 37,  HAS_WIDESCREEN ? 376 : 371, 0, 3 },
+    { HAS_WIDESCREEN ? 259 : 124, HAS_WIDESCREEN ? 374 : 369, 1, 3 },
+    { HAS_WIDESCREEN ? 346 : 211, HAS_WIDESCREEN ? 373 : 368, 2, 3 },
+    { HAS_WIDESCREEN ? 437 : 302, HAS_WIDESCREEN ? 374 : 369, 3, 3 },
+    { HAS_WIDESCREEN ? 560 : 425, HAS_WIDESCREEN ? 380 : 375, 4, 3 },
+    { HAS_WIDESCREEN ? 647 : 512, HAS_WIDESCREEN ? 373 : 368, 5, 3 },
+    { HAS_WIDESCREEN ? 737 : 602, HAS_WIDESCREEN ? 370 : 365, 6, 3 },
+    { HAS_WIDESCREEN ? 826 : 691, HAS_WIDESCREEN ? 373 : 368, 7, 3 }
 };
 
-static SpecialGridPlacement gMushroomGridPlacement[] = {  
-    { 110, 441, 0, 0 },
-    { 237, 360, 1, 0 },
-    { 298, 458, 2, 0 },
-    { 355, 296, 3, 0 },
-    { 387, 203, 4, 0 },
-    { 460, 385, 5, 0 },
-    { 486, 478, 6, 0 },
-    { 552, 283, 7, 0 }
+static SpecialGridPlacement gMushroomGridPlacement[] = {
+    { HAS_WIDESCREEN ? 245 : 110, HAS_WIDESCREEN ? 446 : 441, 0, 0 },
+    { HAS_WIDESCREEN ? 372 : 237, HAS_WIDESCREEN ? 365 : 360, 1, 0 },
+    { HAS_WIDESCREEN ? 433 : 298, HAS_WIDESCREEN ? 463 : 458, 2, 0 },
+    { HAS_WIDESCREEN ? 490 : 355, HAS_WIDESCREEN ? 301 : 296, 3, 0 },
+    { HAS_WIDESCREEN ? 522 : 387, HAS_WIDESCREEN ? 208 : 203, 4, 0 },
+    { HAS_WIDESCREEN ? 595 : 460, HAS_WIDESCREEN ? 390 : 385, 5, 0 },
+    { HAS_WIDESCREEN ? 621 : 486, HAS_WIDESCREEN ? 483 : 478, 6, 0 },
+    { HAS_WIDESCREEN ? 687 : 552, HAS_WIDESCREEN ? 288 : 283, 7, 0 }
 };
 
-static SpecialGridPlacement gAquariumGridPlacement[] = {  
-    { 113, 185, 0, 0 },
-    { 306, 120, 1, 0 },
-    { 356, 270, 2, 0 },
-    { 622, 120, 3, 0 },
-    { 669, 270, 4, 0 },
-    { 122, 355, 5, 0 },
-    { 365, 458, 6, 0 },
-    { 504, 417, 7, 0 }
+static SpecialGridPlacement gAquariumGridPlacement[] = {
+    { HAS_WIDESCREEN ? 248 : 113, HAS_WIDESCREEN ? 190 : 185, 0, 0 },
+    { HAS_WIDESCREEN ? 441 : 306, HAS_WIDESCREEN ? 125 : 120, 1, 0 },
+    { HAS_WIDESCREEN ? 491 : 356, HAS_WIDESCREEN ? 275 : 270, 2, 0 },
+    { HAS_WIDESCREEN ? 757 : 622, HAS_WIDESCREEN ? 125 : 120, 3, 0 },
+    { HAS_WIDESCREEN ? 804 : 669, HAS_WIDESCREEN ? 275 : 270, 4, 0 },
+    { HAS_WIDESCREEN ? 257 : 122, HAS_WIDESCREEN ? 360 : 355, 5, 0 },
+    { HAS_WIDESCREEN ? 500 : 365, HAS_WIDESCREEN ? 463 : 458, 6, 0 },
+    { HAS_WIDESCREEN ? 639 : 504, HAS_WIDESCREEN ? 422 : 417, 7, 0 }
 };
 
 ZenGarden::ZenGarden()

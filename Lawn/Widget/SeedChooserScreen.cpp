@@ -21,7 +21,7 @@
 #include "../../SexyAppFramework/Slider.h"
 
 const Rect cSeedClipRect = Rect(0, 123, BOARD_WIDTH, 420);
-const int cSeedPacketYOffset = 0;
+const int cSeedPacketYOffset = (HAS_WIDESCREEN ? 2: 0);
 const int cSeedPacketRows = 8;
 
 SeedChooserScreen::SeedChooserScreen()
@@ -55,9 +55,10 @@ SeedChooserScreen::SeedChooserScreen()
 	mStartButton->mParentWidget = this;
 	EnableStartButton(false);
 
+	int aButtonOffsetX = BOARD_ADDITIONAL_WIDTH * 2;
 	mMenuButton = new GameButton(SeedChooserScreen::SeedChooserScreen_Menu);
 	mMenuButton->mLabel = _S("[MENU_BUTTON]");
-	mMenuButton->Resize(681, -10, 117, 46);
+	mMenuButton->Resize(681 + aButtonOffsetX, -10, 117, 46);
 	mMenuButton->mDrawStoneButton = true;
 	mMenuButton->mParentWidget = this;
 
@@ -103,7 +104,7 @@ SeedChooserScreen::SeedChooserScreen()
 	mAlmanacButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mAlmanacButton->mColors[0] = aBtnColor;
 	mAlmanacButton->mColors[1] = aBtnColor;
-	mAlmanacButton->Resize(560, 572, aImageWidth, aImageHeight);
+	mAlmanacButton->Resize(560 + aButtonOffsetX, 572, aImageWidth, aImageHeight);
 	mAlmanacButton->mParentWidget = this;
 	mAlmanacButton->mTextOffsetY = 1;
 
@@ -115,7 +116,7 @@ SeedChooserScreen::SeedChooserScreen()
 	mStoreButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mStoreButton->mColors[0] = aBtnColor;
 	mStoreButton->mColors[1] = aBtnColor;
-	mStoreButton->Resize(680, 572, aImageWidth, aImageHeight);
+	mStoreButton->Resize(680 + aButtonOffsetX, 572, aImageWidth, aImageHeight);
 	mStoreButton->mParentWidget = this;
 	mStoreButton->mTextOffsetY = 1;
 
@@ -451,9 +452,11 @@ void SeedChooserScreen::UpdateViewLawn()
 	}
 
 	int aBoardX = BOARD_IMAGE_WIDTH_OFFSET - mApp->mWidth;
-	int aSeedChooserY = SEED_CHOOSER_OFFSET_Y - Sexy::IMAGE_SEEDCHOOSER_BACKGROUND->mHeight;
+	int aSeedChooserY = SEED_CHOOSER_OFFSET_Y + BOARD_ADDITIONAL_WIDTH - Sexy::IMAGE_SEEDCHOOSER_BACKGROUND->mHeight;
 	if (mViewLawnTime <= 100)
 	{
+		mBoard->mRoofPoleOffset = TodAnimateCurve(0, 100, mViewLawnTime, ROOF_POLE_END, ROOF_POLE_START, TodCurves::CURVE_EASE_IN_OUT);
+		mBoard->mRoofTreeOffset = TodAnimateCurve(0, 100, mViewLawnTime, ROOF_TREE_END, ROOF_TREE_START, TodCurves::CURVE_EASE_IN_OUT);
 		mBoard->Move(-TodAnimateCurve(0, 100, mViewLawnTime, aBoardX, 0, CURVE_EASE_IN_OUT), 0);
 		Move(0, TodAnimateCurve(0, 40, mViewLawnTime, aSeedChooserY, SEED_CHOOSER_OFFSET_Y, CURVE_EASE_IN_OUT));
 	}
@@ -465,6 +468,8 @@ void SeedChooserScreen::UpdateViewLawn()
 	else if (mViewLawnTime <= 350)
 	{
 		mBoard->ClearAdvice(ADVICE_CLICK_TO_CONTINUE);
+		mBoard->mRoofPoleOffset = TodAnimateCurve(250, 350, mViewLawnTime, ROOF_POLE_START, ROOF_POLE_END, TodCurves::CURVE_EASE_IN_OUT);
+		mBoard->mRoofTreeOffset = TodAnimateCurve(250, 350, mViewLawnTime, ROOF_TREE_START, ROOF_TREE_END, TodCurves::CURVE_EASE_IN_OUT);
 		mBoard->Move(-TodAnimateCurve(250, 350, mViewLawnTime, 0, aBoardX, CURVE_EASE_IN_OUT), 0);
 		Move(0, TodAnimateCurve(310, 350, mViewLawnTime, SEED_CHOOSER_OFFSET_Y, aSeedChooserY, CURVE_EASE_IN_OUT));
 	}

@@ -54,7 +54,7 @@ TitleScreen::~TitleScreen()
 
 void TitleScreen::DrawToPreload(Graphics* g)
 {
-	g->DrawImageF(IMAGE_PLANTSHADOW, 1000.0f, 0.0f);
+	g->DrawImageF(IMAGE_PLANTSHADOW, 1000.0f, (HAS_WIDESCREEN ? -50.0f : 0.0f));
 }
 
 void TitleScreen::Draw(Graphics* g)
@@ -141,7 +141,7 @@ void TitleScreen::Draw(Graphics* g)
 	int aLogoY;
 	if (mTitleStateCounter > 60)
 	{
-		aLogoY = TodAnimateCurve(100, 60, mTitleStateCounter, -150, 10, CURVE_EASE_IN);
+		aLogoY = TodAnimateCurve(100, 60, mTitleStateCounter, (HAS_WIDESCREEN ? -IMAGE_PVZ_LOGO->mHeight : -150) , 10, CURVE_EASE_IN);
 	}
 	else
 	{
@@ -165,7 +165,7 @@ void TitleScreen::Draw(Graphics* g)
 	else
 	{
 		Graphics aClipG(*g);
-		aClipG.ClipRect(240, aGrassY, mCurBarWidth, IMAGE_LOADBAR_GRASS->mHeight);
+		aClipG.ClipRect(240 + BOARD_ADDITIONAL_WIDTH, aGrassY, mCurBarWidth, IMAGE_LOADBAR_GRASS->mHeight);
 		aClipG.DrawImage(IMAGE_LOADBAR_GRASS, aGrassX, aGrassY);
 
 		float aRollLen = mCurBarWidth * 0.94f;
@@ -297,7 +297,7 @@ void TitleScreen::Update()
 	int aButtonY;
 	if (mTitleStateCounter > 10)
 	{
-		aButtonY = TodAnimateCurve(60, 10, mTitleStateCounter, 650, 534, TodCurves::CURVE_EASE_IN);
+		aButtonY = TodAnimateCurve(60, 10, mTitleStateCounter, (HAS_WIDESCREEN ? BOARD_HEIGHT : 650), 534, TodCurves::CURVE_EASE_IN);
 	}
 	else
 	{
@@ -434,7 +434,7 @@ void TitleScreen::Update()
 			{
 				aReanimType = ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD;
 			}
-			float aPosX = aTriggerPoint[i] + 225.0f;
+			float aPosX = aTriggerPoint[i] + (HAS_WIDESCREEN ? 480.0f - (BOARD_OFFSET_X / 2) : 225.0f);
 			float aPosY = 511.0f;
 			Reanimation* aSproutReanim = mApp->AddReanimation(aPosX, aPosY, 0, aReanimType);
 			aSproutReanim->mAnimRate = 18.0f;

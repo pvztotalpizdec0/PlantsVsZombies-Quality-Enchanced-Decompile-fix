@@ -495,6 +495,10 @@ bool LawnLoadGame(Board* theBoard, const std::string& theFilePath)
 
 	SaveFileHeader aHeader;
 	aContext.SyncBytes(&aHeader, sizeof(aHeader));
+	if (aHeader.mIsWidescreen != HAS_WIDESCREEN)
+	{
+		return false;
+	}
 	if (aHeader.mMagicNumber != SAVE_FILE_MAGIC_NUMBER || aHeader.mBuildVersion != SAVE_FILE_VERSION || aHeader.mBuildDate != SAVE_FILE_DATE)
 	{
 		return false;
@@ -522,6 +526,7 @@ bool LawnSaveGame(Board* theBoard, const std::string& theFilePath)
 	aHeader.mMagicNumber = SAVE_FILE_MAGIC_NUMBER;
 	aHeader.mBuildVersion = SAVE_FILE_VERSION;
 	aHeader.mBuildDate = SAVE_FILE_DATE;
+	aHeader.mIsWidescreen = HAS_WIDESCREEN;
 
 	aContext.SyncBytes(&aHeader, sizeof(aHeader));
 	SyncBoard(aContext, theBoard);

@@ -2292,12 +2292,8 @@ void Plant::Squish()
     if (!mIsAsleep)
     {
         if (mSeedType == SeedType::SEED_CHERRYBOMB || mSeedType == SeedType::SEED_JALAPENO ||
-            mSeedType == SeedType::SEED_DOOMSHROOM || mSeedType == SeedType::SEED_ICESHROOM)
-        {
-            DoSpecial();
-            return;
-        }
-        else if (mSeedType == SeedType::SEED_POTATOMINE && mState != PlantState::STATE_NOTREADY)
+            mSeedType == SeedType::SEED_DOOMSHROOM || mSeedType == SeedType::SEED_ICESHROOM || 
+            (mSeedType == SeedType::SEED_POTATOMINE && mState != PlantState::STATE_NOTREADY))
         {
             DoSpecial();
             return;
@@ -2337,7 +2333,7 @@ void Plant::UpdateBowling()
         }
 
         mX -= aSpeed;
-        if (mX > 800)
+        if (mX > 800 + BOARD_ADDITIONAL_WIDTH)
             Die();
     }
 

@@ -596,28 +596,39 @@ void Coin::UpdateCollected()
     int aDestX, aDestY;
     if (IsSun())
     {
-        aDestX = 15;
-        aDestY = 0;
+        aDestX = (HAS_WIDESCREEN ? mBoard->mSeedBank->mX + 5 : 15);
+        aDestY = (HAS_WIDESCREEN ? max(0, mBoard->mSeedBank->mY) : 0);
     }
     else if (IsMoney())
     {
-        aDestX = 39;
-        aDestY = 558;
+        int aMoneyX;
+        int aMoneyY = -10;
+        if (!HAS_WIDESCREEN)
+        {
+            aDestX = 39;
+            aDestY = 558;
+        }
 
         if (mApp->GetDialog((int)Dialogs::DIALOG_STORE))
         {
-            aDestX = 662;
-            aDestY = 546;
+            aMoneyX = 12;
+            aDestX = (HAS_WIDESCREEN ? STORESCREEN_COINBANK_X + aMoneyX : 662);
+            aDestY = (HAS_WIDESCREEN ? STORESCREEN_COINBANK_Y + aMoneyY : 546);
         }
         else if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || mApp->mCrazyDaveState != CrazyDaveState::CRAZY_DAVE_OFF)
         {
-            aDestX = 442;
+            aDestX = (HAS_WIDESCREEN ? mBoard->mCoinBankX + aMoneyX : 442);
+            if (HAS_WIDESCREEN)
+            {
+                aMoneyX = mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || mApp->mCrazyDaveState != CrazyDaveState::CRAZY_DAVE_OFF ? -2 : -18;
+                aDestY = mBoard->mCoinBankY + aMoneyY;
+            }
         }
     }
     else if (IsPresentWithAdvice())
     {
-        aDestX = 35;
-        aDestY = 487;
+        aDestX = 35 + BOARD_ADDITIONAL_WIDTH;
+        aDestY = (HAS_WIDESCREEN ? BOARD_HEIGHT - 113 : 487);
     }
     else if(mType == CoinType::COIN_AWARD_PRESENT || mType == CoinType::COIN_PRESENT_PLANT)
     {
@@ -640,7 +651,7 @@ void Coin::UpdateCollected()
     }
     else
     {
-        aDestX = 400 - mWidth / 2;
+        aDestX = 400 - mWidth / 2 + BOARD_ADDITIONAL_WIDTH;
         aDestY = 200 - mHeight / 2;
         mDisappearCounter++;
     }
