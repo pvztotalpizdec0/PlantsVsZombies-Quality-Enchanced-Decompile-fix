@@ -25,7 +25,7 @@ const int cZombieHeight = 80;
 const int cZombieYStartOffset = 6;
 const Rect cZombieClipRect = Rect(0, cZombieHeight + cZombieYStartOffset, BOARD_WIDTH, 474);
 const int cZombieRows = 5;
-const char* cWeirdCharacters[] = { "®" };
+const char* cWeirdCharacters[] = { "Â®" };
 
 AlmanacDialog::AlmanacDialog(LawnApp* theApp) : LawnDialog(theApp, DIALOG_ALMANAC, true, _S("Almanac"), _S(""), _S(""), BUTTONS_NONE)
 {
@@ -385,7 +385,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 			g->mTransX += BOARD_ADDITIONAL_WIDTH;
 			mApp->mPoolEffect->PoolEffectDraw(g, aNight);
 			g->mTransY += 145;
-			g->mTransX += BOARD_ADDITIONAL_WIDTH;
+			g->mTransX -= BOARD_ADDITIONAL_WIDTH;
 			g->ClearClipRect();
 		}
 	}
