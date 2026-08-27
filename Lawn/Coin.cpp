@@ -615,7 +615,7 @@ void Coin::UpdateCollected()
             aDestX = (HAS_WIDESCREEN ? STORESCREEN_COINBANK_X + aMoneyX : 662);
             aDestY = (HAS_WIDESCREEN ? STORESCREEN_COINBANK_Y + aMoneyY : 546);
         }
-        else if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || mApp->mCrazyDaveState != CrazyDaveState::CRAZY_DAVE_OFF)
+        else
         {
             aDestX = (HAS_WIDESCREEN ? mBoard->mCoinBankX + aMoneyX : 442);
             if (HAS_WIDESCREEN)
