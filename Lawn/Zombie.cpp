@@ -93,6 +93,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     mShieldJustGotShotCounter = 0;
     mShieldRecoilCounter = 0;
     mChilledCounter = 0;
+    mPoisonCounter = 0;
     mIceTrapCounter = 0;
     mButteredCounter = 0;
     mMindControlled = false;
@@ -3211,6 +3212,11 @@ void Zombie::OverrideParticleColor(TodParticleSystem* aParticle)
             aParticle->OverrideColor(nullptr, Color(75, 75, 255, 255));
             aParticle->OverrideExtraAdditiveDraw(nullptr, true);
         }
+        else if (mPoisonCounter > 0)
+        {
+            aParticle->OverrideColor(nullptr, Color(175, 50, 175, 255));
+            aParticle->OverrideExtraAdditiveDraw(nullptr, true);
+        }
     }
 }
 
@@ -3275,6 +3281,7 @@ void Zombie::DropHead(unsigned int theDamageFlags)
     }
 
     mHasHead = false;
+    DropHelm(0U);
     SetupReanimForLostHead();
     if (TestBit(theDamageFlags, DamageFlags::DAMAGE_DOESNT_LEAVE_BODY))
     {
@@ -4383,6 +4390,18 @@ void Zombie::UpdatePlaying()
             UpdateAnimSpeed();
         }
     }
+    if (mPoisonCounter > 0)
+    {
+        mPoisonCounter--;
+        if (mPoisonCounter == 0)
+        {
+            UpdateReanim();
+        }
+        if (mBoard->mMainCounter % 7 == RandRangeInt(0, 3))
+        {
+            TakeBodyDamage(1, 8U);
+        }
+    }
     if (mButteredCounter > 0)
     {
         mButteredCounter--;
@@ -4402,6 +4421,7 @@ void Zombie::UpdatePlaying()
     {
         UpdateActions();
         UpdateZombiePosition();
+        UpdateShearPlate();
         CheckIfPreyCaught();
         CheckForPool();
         CheckForHighGround();
@@ -4950,6 +4970,16 @@ void Zombie::DrawZombiePart(Graphics* g, Image* theImage, int theFrame, int theR
         g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
         g->SetDrawMode(Graphics::DRAWMODE_NORMAL);
     }
+    else if (mPoisonCounter > 0)
+    {
+        g->SetColorizeImages(true);
+        g->SetColor(Color(175, 50, 175, anAlpha));
+        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
+
+        g->SetDrawMode(Graphics::DRAWMODE_ADDITIVE);
+        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
+        g->SetDrawMode(Graphics::DRAWMODE_NORMAL);
+    }
     else
     {
         g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
@@ -5465,6 +5495,12 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
     else if (mChilledCounter > 0 || mIceTrapCounter > 0)
     {
         aColorOverride = Color(75, 75, 255, aFadeAlpha);
+        aExtraAdditiveColor = aColorOverride;
+        aEnableExtraAdditiveDraw = true;
+    }
+    else if (mPoisonCounter > 0)
+    {
+        aColorOverride = Color(175, 50, 175, aFadeAlpha);
         aExtraAdditiveColor = aColorOverride;
         aEnableExtraAdditiveDraw = true;
     }
@@ -7288,6 +7324,21 @@ void Zombie::ApplyChill(bool theIsIceTrap)
     UpdateAnimSpeed();
 }
 
+void Zombie::ApplyPoison()
+{
+    if (!CanBePoison())
+        return;
+
+    if (mPoisonCounter == 0)
+    {
+        mApp->PlayFoley(FoleyType::FOLEY_YUCK);
+    }
+
+    mPoisonCounter = max(500, mPoisonCounter);
+
+    UpdateAnimSpeed();
+}
+
 void Zombie::DropShield(unsigned int theDamageFlags)
 {
     if (mShieldType == ShieldType::SHIELDTYPE_NONE)
@@ -7484,6 +7535,10 @@ int Zombie::TakeHelmDamage(int theDamage, unsigned int theDamageFlags)
     {
         ApplyChill(false);
     }
+    if (TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_POISON))
+    {
+        ApplyPoison();
+    }
     if (mHelmHealth == 0)
     {
         DropHelm(theDamageFlags);
@@ -7583,6 +7638,10 @@ void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
     if (TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_FREEZE))
     {
         ApplyChill(false);
+    }
+    if (TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_POISON))
+    {
+        ApplyPoison();
     }
 
     int aBodyHealthOrigin = mBodyHealth;
@@ -7810,6 +7869,28 @@ bool Zombie::CanBeChilled()
         mZombiePhase == ZombiePhase::PHASE_BOSS_HEAD_SPIT;
 }
 
+bool Zombie::CanBePoison()
+{
+    if (mZombieType == ZombieType::ZOMBIE_ZAMBONI || mZombieType == ZombieType::ZOMBIE_BOSS || IsBobsledTeamWithSled())
+        return false;
+
+    if (IsDeadOrDying())
+        return false;
+
+    if (mZombiePhase == ZombiePhase::PHASE_DIGGER_TUNNELING ||
+        mZombiePhase == ZombiePhase::PHASE_DIGGER_RISING ||
+        mZombiePhase == ZombiePhase::PHASE_DIGGER_TUNNELING_PAUSE_WITHOUT_AXE ||
+        mZombiePhase == ZombiePhase::PHASE_DIGGER_RISE_WITHOUT_AXE ||
+        mZombiePhase == ZombiePhase::PHASE_RISING_FROM_GRAVE ||
+        mZombiePhase == ZombiePhase::PHASE_DANCER_RISING)
+        return false;
+
+    if (mMindControlled)
+        return false;
+
+    return true;
+}
+
 bool Zombie::CanBeFrozen()
 {
     if (!CanBeChilled())
@@ -7934,6 +8015,69 @@ void Zombie::SetRow(int theRow)
 
     mRow = theRow;
     mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_ZOMBIE, mRow, 4);
+}
+
+void Zombie::UpdateShearPlate()
+{
+    bool aCanGoUp = true;
+    bool aCanGoDown = true;
+    bool aIsPool = mBoard->mPlantRow[mRow] == PlantRowType::PLANTROW_POOL;
+    int aZombieCol = mBoard->PixelToGridX(mPosX, mPosY);
+    if (!mBoard->RowCanHaveZombies(mRow - 1))
+    {
+        aCanGoUp = false;
+    }
+    else if (mBoard->mPlantRow[mRow - 1] == PlantRowType::PLANTROW_POOL && !aIsPool)
+    {
+        aCanGoUp = false;
+    }
+    else if (mBoard->mPlantRow[mRow - 1] != PlantRowType::PLANTROW_POOL && aIsPool)
+    {
+        aCanGoUp = false;
+    }
+    if (!mBoard->RowCanHaveZombies(mRow + 1))
+    {
+        aCanGoDown = false;
+    }
+    else if (mBoard->mPlantRow[mRow + 1] == PlantRowType::PLANTROW_POOL && !aIsPool)
+    {
+        aCanGoDown = false;
+    }
+    else if (mBoard->mPlantRow[mRow + 1] != PlantRowType::PLANTROW_POOL && aIsPool)
+    {
+        aCanGoDown = false;
+    }
+
+    if (mZombieType != ZombieType::ZOMBIE_BOSS)
+    {
+        if (mBoard->mGridSquareType[aZombieCol][mRow] == GridSquareType::GRIDSQUARE_SHEAR_PLATE)
+        {
+            if (aCanGoDown && !aCanGoUp)
+            {
+                SetRow(mRow + 1);
+            }
+            else if (!aCanGoDown && aCanGoUp)
+            {
+                SetRow(mRow - 1);
+            }
+            else if (aCanGoDown && aCanGoUp)
+            {
+                SetRow((Rand(2) == 0) ? (mRow + 1) : (mRow - 1));
+            }
+            else
+            {
+                TOD_ASSERT();
+            }
+        }
+        else if (mBoard->mGridSquareType[aZombieCol][mRow] == GridSquareType::GRIDSQUARE_SHEAR_PLATE_UP && aCanGoUp)
+        {
+            SetRow(mRow - 1);
+        }
+        else if (mBoard->mGridSquareType[aZombieCol][mRow] == GridSquareType::GRIDSQUARE_SHEAR_PLATE_DOWN && aCanGoDown)
+        {
+            SetRow(mRow + 1);
+        }
+    }
 }
 
 void Zombie::RiseFromGrave(int theCol, int theRow)

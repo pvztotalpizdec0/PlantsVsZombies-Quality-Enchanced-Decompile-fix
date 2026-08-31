@@ -4924,6 +4924,12 @@ void Plant::Die()
             aPotReanim->mAnimRate = RandRangeFloat(10.0f, 15.0f);
         }
     }
+
+    if (mBoard->mGridSquareType[mPlantCol][mRow] == GridSquareType::GRIDSQUARE_DONT_LOSE_PLANT)
+    {
+        mBoard->mLoseFromPlantDie = true;
+        mBoard->ZombiesWon();
+    }
 }
 
 int Plant::GetCost(SeedType theSeedType, SeedType theImitaterType)

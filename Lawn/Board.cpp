@@ -80,6 +80,7 @@ Board::Board(LawnApp* theApp)
 			mGridCelLook[i][j] = Rand(20);
 			mGridCelOffset[i][j][0] = Rand(10) - 5;
 			mGridCelOffset[i][j][1] = Rand(10) - 5;
+			mGoldTileCounter[i][j] = 1;
 		}
 
 		for (int k = 0; k < MAX_GRID_SIZE_Y + 1; k++)
@@ -182,6 +183,7 @@ Board::Board(LawnApp* theApp)
 	mGargantuarsKilled = 0;
 	mRoofPoleOffset = ROOF_POLE_START;
 	mRoofTreeOffset = ROOF_TREE_START;
+	mLoseFromPlantDie = false;
 
 	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
 	{
@@ -545,6 +547,17 @@ void Board::AddGraveStones(int theGridX, int theCount, MTRand& theLevelRNG)
 			++i;
 		}
 	}
+}
+
+GridItem* Board::AddTent(int theGridX, int theGridY)
+{
+	GridItem* aTent = mGridItems.DataArrayAlloc();
+	aTent->mGridItemType = GridItemType::GRIDITEM_TENT;
+	aTent->mGridItemCounter = RandRangeInt(700, 1000);
+	aTent->mRenderOrder = MakeRenderOrder(RenderLayer::RENDER_LAYER_GRAVE_STONE, theGridY, 3);
+	aTent->mGridX = theGridX;
+	aTent->mGridY = theGridY;
+	return aTent;
 }
 
 int Board::GetNumWavesPerFlag()
@@ -2435,6 +2448,20 @@ ZombieType Board::PickGraveRisingZombieType(int theZombiePoints)
 	return (ZombieType)TodPickFromWeightedArray(aZombieWeightArray, aCount);
 }
 
+ZombieType Board::PickTentRisingZombieType()
+{
+	TodWeightedArray aZombieWeightArray[(int)ZombieType::NUM_ZOMBIE_TYPES];
+	int aCount = 3;
+	aZombieWeightArray[0].mItem = ZombieType::ZOMBIE_NORMAL;
+	aZombieWeightArray[0].mWeight = gZombieDefs[ZombieType::ZOMBIE_NORMAL].mPickWeight;
+	aZombieWeightArray[1].mItem = ZombieType::ZOMBIE_TRAFFIC_CONE;
+	aZombieWeightArray[1].mWeight = gZombieDefs[ZombieType::ZOMBIE_TRAFFIC_CONE].mPickWeight;
+	aZombieWeightArray[2].mItem = ZombieType::ZOMBIE_PAIL;
+	aZombieWeightArray[2].mWeight = gZombieDefs[ZombieType::ZOMBIE_PAIL].mPickWeight;
+
+	return (ZombieType)TodPickFromWeightedArray(aZombieWeightArray, aCount);
+}
+
 ZombieType Board::PickZombieType(int theZombiePoints, int theWaveIndex, ZombiePicker* theZombiePicker)
 {
 	int aPickCount = 0;
@@ -2800,7 +2827,7 @@ PlantingReason Board::CanPlantAt(int theGridX, int theGridY, SeedType theSeedTyp
 		return PlantingReason::PLANTING_NOT_HERE;
 	}
 	GridSquareType aGridSquare = mGridSquareType[theGridX][theGridY];
-	if (aGridSquare == GridSquareType::GRIDSQUARE_DIRT || aGridSquare == GridSquareType::GRIDSQUARE_NONE)
+	if (aGridSquare == GridSquareType::GRIDSQUARE_DIRT || aGridSquare == GridSquareType::GRIDSQUARE_NONE || aGridSquare == GridSquareType::GRIDSQUARE_MOLD)
 	{
 		return PlantingReason::PLANTING_NOT_HERE;
 	}
@@ -4939,6 +4966,8 @@ void Board::UpdateGameObjects()
 	mCursorPreview->Update();
 	mCursorObject->Update();
 
+	UpdateGoldTile();
+
 	for (int i = 0; i < mSeedBank->mNumPackets; i++)
 	{
 		mSeedBank->mSeedPackets[i].Update();
@@ -5039,6 +5068,10 @@ void Board::ZombiesWon(Zombie* theZombie)
 	else if (mApp->IsIZombieLevel())
 	{
 		aGameOverMsg = _S("[I_ZOMBIE_DEATH_MESSAGE]");
+	}
+	else if (mLoseFromPlantDie)
+	{
+		aGameOverMsg = _S("[LOSE_PLANT_DEATH_MESSAGE]");
 	}
 	else
 	{
@@ -5322,6 +5355,28 @@ void Board::UpdateZombieSpawning()
 			}
 		}
 		mZombieCountDownStart = mZombieCountDown;
+	}
+}
+
+void Board::UpdateGoldTile()
+{
+	for (int aCol = 0; aCol < MAX_GRID_SIZE_X; aCol++)
+	{
+		for (int aRow = 0; aRow < MAX_GRID_SIZE_Y; aRow++)
+		{
+			if (mGridSquareType[aCol][aRow] == GridSquareType::GRIDSQUARE_GOLD_TILE)
+			{
+				if (GetTopPlantAt(aCol, aRow, PlantPriority::TOPPLANT_ANY))
+				{
+					mGoldTileCounter[aCol][aRow]--;
+					if (mGoldTileCounter[aCol][aRow] <= 0)
+					{
+						mGoldTileCounter[aCol][aRow] = RandRangeInt(1850, 2000);
+						AddCoin(GridToPixelX(aCol, aRow), GridToPixelY(aCol, aRow), CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT);
+					}
+				}
+			}
+		}
 	}
 }
 

@@ -124,6 +124,7 @@ public:
 	Challenge*						mChallenge;												
 	bool							mPaused;												
 	GridSquareType					mGridSquareType[MAX_GRID_SIZE_X][MAX_GRID_SIZE_Y];		
+	int								mGoldTileCounter[MAX_GRID_SIZE_X][MAX_GRID_SIZE_Y];
 	int								mGridCelLook[MAX_GRID_SIZE_X][MAX_GRID_SIZE_Y];			
 	int								mGridCelOffset[MAX_GRID_SIZE_X][MAX_GRID_SIZE_Y][2];	
 	int								mGridCelFog[MAX_GRID_SIZE_X][MAX_GRID_SIZE_Y + 1];		
@@ -232,6 +233,7 @@ public:
 	int								mGargantuarsKilled;
 	int								mCoinBankX;
 	int								mCoinBankY;
+	bool                            mLoseFromPlantDie;
 
 public:
 	Board(LawnApp* theApp);
@@ -254,6 +256,7 @@ public:
 	Coin*							AddCoin(int theX, int theY, CoinType theCoinType, CoinMotion theCoinMotion);
 	void							RefreshSeedPacketFromCursor();
 	ZombieType						PickGraveRisingZombieType(int theZombiePoints);
+	ZombieType						PickTentRisingZombieType();
 	ZombieType						PickZombieType(int theZombiePoints, int theWaveIndex, ZombiePicker* theZombiePicker);
 	int								PickRowForNewZombie(ZombieType theZombieType);
 	/*inline*/ Zombie*				AddZombie(ZombieType theZombieType, int theFromWave, bool skipBushAnimation = false);
@@ -314,11 +317,13 @@ public:
 	/*inline*/ int					CountSunFlowers();
 	int								GetSeedPacketPositionX(int theIndex);
 	void							AddGraveStones(int theGridX, int theCount, MTRand& theLevelRNG);
+	GridItem*						AddTent(int theGridX, int theGridY);
 	int								GetGraveStoneCount();
 	void							ZombiesWon(Zombie* theZombie = nullptr);
 	void							DrawLevel(Graphics* g);
 	void							DrawShovel(Graphics* g);
 	void							UpdateZombieSpawning();
+	void							UpdateGoldTile();
 	void							UpdateSunSpawning();
 	/*inline*/ void					ClearAdvice(AdviceType theHelpIndex);
 	bool							RowCanHaveZombieType(int theRow, ZombieType theZombieType);

@@ -116,7 +116,8 @@ public:
     bool                            mHitUmbrella;                               
     Rect                            mZombieRect;                                
     Rect                            mZombieAttackRect;                          
-    int                             mChilledCounter;                            
+    int                             mChilledCounter;
+    int                             mPoisonCounter;
     int                             mButteredCounter;                           
     int                             mIceTrapCounter;                            
     bool                            mMindControlled;                            
@@ -161,7 +162,7 @@ public:
     int                             mFireballRow;                               
     bool                            mIsFireBall;                                
     ReanimationID                   mMoweredReanimID;                           
-    int                             mLastPortalX;                               
+    int                             mLastPortalX;          
 
 public:
     Zombie();
@@ -182,8 +183,10 @@ public:
     void                            DrawBungeeCord(Graphics* g, int theOffsetX, int theOffsetY);
     void                            TakeDamage(int theDamage, unsigned int theDamageFlags);
     /*inline*/ void                 SetRow(int theRow);
+    void                            UpdateShearPlate();
     float                           GetPosYBasedOnRow(int theRow);
     void                            ApplyChill(bool theIsIceTrap);
+    void                            ApplyPoison();
     void                            UpdateZombieBungee();
     void                            BungeeLanding();
     bool                            EffectedByDamage(unsigned int theDamageRangeFlags);
@@ -306,6 +309,7 @@ public:
     bool                            IsBobsledTeamWithSled();
     bool                            CanBeFrozen();
     bool                            CanBeChilled();
+    bool                            CanBePoison();
     void                            UpdateZombieSnorkel();
     void                            ReanimIgnoreClipRect(const char* theTrackName, bool theIgnoreClipRect);
     void                            SetAnimRate(float theAnimRate);

@@ -53,6 +53,7 @@ public:
 
 	void					DrawLadder(Sexy::Graphics* g);
 	void					DrawCrater(Sexy::Graphics* g);
+	void					UpdateTent();
 	void					DrawGraveStone(Sexy::Graphics* g);
 	void					GridItemDie();
 	void					AddGraveStoneParticles();

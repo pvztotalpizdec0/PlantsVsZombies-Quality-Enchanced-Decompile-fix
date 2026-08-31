@@ -171,6 +171,18 @@ void GridItem::DrawGraveStone(Graphics* g)
     g->DrawImage(IMAGE_TOMBSTONE_MOUNDS, x, y - aVisibleHeightDirt, aSrcRectDirt);
 }
 
+void GridItem::UpdateTent()
+{
+    mGridItemCounter--;
+    if (mGridItemCounter <= 0)
+    {
+        Zombie* aZombie = mBoard->AddZombieInRow(mBoard->PickTentRisingZombieType(), mGridY, mBoard->mCurrentWave, true);
+        aZombie->mPosX = mBoard->GridToPixelX(mGridX, mGridY) - 80;
+
+        mGridItemCounter = RandRangeInt(700, 1000);
+    }
+}
+
 void GridItem::DrawStinky(Graphics* g)
 {
     Reanimation* aStinkyReanim = mApp->ReanimationGet(mGridItemReanimID);
@@ -581,6 +593,10 @@ void GridItem::Update()
     if (mGridItemType == GridItemType::GRIDITEM_IZOMBIE_BRAIN)
     {
         UpdateBrain();
+    }
+    if (mGridItemType == GridItemType::GRIDITEM_TENT)
+    {
+        UpdateTent();
     }
 }
 
