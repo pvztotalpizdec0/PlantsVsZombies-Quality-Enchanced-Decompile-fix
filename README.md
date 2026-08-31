@@ -14,7 +14,7 @@ Based on PlantsVsZombies Quality Enhanced
 ### How to use widescreen:
 
 * Go to GameConstants.h
-* Turn 'HAS\_WIDESCREEN' to 'true'
+* Turn 'HAS_WIDESCREEN' to 'true'
 * Go to 'Debug' folder
 * Copy all folders from '16-9' to 'Debug'
 
@@ -32,10 +32,11 @@ GenaDip (for adventure button fix)
 
 
 
-\# What has been done:
-- \[x] Built-in widescreen
+# What has been done:
 
-(idk) Bugfixes
+- [x] Built-in widescreen
 
-\- \[ ] Vulkan renderer
+- (idk) Bugfixes
+
+- [ ] Vulkan renderer
 
